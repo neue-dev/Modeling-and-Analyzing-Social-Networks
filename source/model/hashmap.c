@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-16 17:41:28
- * @ Modified time: 2024-07-16 18:27:27
+ * @ Modified time: 2024-07-17 08:57:05
  * @ Description:
  * 
  * Defines a hashmap class.
@@ -14,6 +14,9 @@
 #include <string.h>
 #include <stdint.h>
 
+// ! remove
+#include <stdio.h>
+
 #define HASHMAP_KEY_LENGTH (1 << 6)
 
 /**
@@ -22,7 +25,7 @@
 typedef struct Entry {
   
   // The id of the entry
-  char key[HASHMAP_KEY_LENGTH];
+  char key[HASHMAP_KEY_LENGTH + 1];
 
   // The data associated with the entry
   void *data;
@@ -44,14 +47,14 @@ Entry *_Entry_alloc() {
  * Initializes a given entry instance with the provided values.
  * 
  * @param   { Entry * }   this  The entry to initialize.
- * @param   { char[] }    key   The key of the given entry.
+ * @param   { char * }    key   The key of the given entry.
  * @param   { void * }    data  The data stored by the entry.
  * @return  { Entry * }         The initialized version of the entry.
 */
-Entry *_Entry_init(Entry *this, char key[], void *data) {
+Entry *_Entry_init(Entry *this, char *key, void *data) {
   
   // Save the id and the data
-  strcpy(this->key, key);
+  strncpy(this->key, key, HASHMAP_KEY_LENGTH);
   this->data = data;
 
   // Return the new initted entry
@@ -62,11 +65,11 @@ Entry *_Entry_init(Entry *this, char key[], void *data) {
  * Creates a new hashma entry.
  * It initializes the entry with the provided parameters.
  * 
- * @param   { char[] }    key   The id of the given entry.
+ * @param   { char * }    key   The id of the given entry.
  * @param   { void * }    data  The data stored by the entry.
  * @return  { Entry * }         The new initialized entry.
 */
-Entry *Entry_new(char key[], void *data) {
+Entry *Entry_new(char *key, void *data) {
   return _Entry_init(_Entry_alloc(), key, data);
 }
 
@@ -89,7 +92,7 @@ typedef struct HashMap {
   Entry **entries;
 
   // The number of entries in the hashmap
-  unsigned int size;
+  uint32_t size;
 
   // The maximum number of entries held by the hashmap
   // This changes when the hashmap resizes
@@ -154,7 +157,7 @@ static inline uint32_t _HashMap_hash(char *key, uint32_t length, uint32_t seed) 
   }
 
   // The final steps of the algorithm
-  h ^= murmur_32_scramble(k);
+  h ^= _HashMap_scramble(k);
 	h ^= length;
 	h ^= h >> 16;
 	h *= 0x85ebca6b;
@@ -164,6 +167,57 @@ static inline uint32_t _HashMap_hash(char *key, uint32_t length, uint32_t seed) 
 
   // Return the generated hash
 	return h;
+}
+
+/**
+ * Allocates space for a new hashmap.
+ * 
+ * @return  { HashMap * }   The pointer to the allocated space.
+ */
+HashMap *_HashMap_alloc() {
+  HashMap *pHashMap = calloc(1, sizeof(*pHashMap));
+
+  return pHashMap;
+}
+
+/**
+ * Initializes the provided hashmap instance.
+ * 
+ * @param   { HashMap * }   this  The pointer to the hashmap to initialize.
+ * @return  { HashMap * }         The pointer to the initialized hashmap.
+ */
+HashMap *_HashMap_init(HashMap *this) {
+
+  uint32_t initialLimit = (1 << 4) - 1;
+
+  // We start with 16 slots
+  this->limit = initialLimit;
+  this->size = 0;
+
+  // Init the entrie pointer array
+  this->entries = calloc(initialLimit, sizeof(Entry *));
+  
+  return this;
+}
+
+/**
+ * Creates a new hashmap initialized with the given values.
+ * 
+ * @return  { HashMap * }   A new hashmap that's been initted.
+ */
+HashMap *HashMap_new() {
+  return _HashMap_init(_HashMap_alloc());
+}
+
+/**
+ * Inserts a new element into the hashmap.
+ * 
+ * @param   { HashMap * }   this  The hashmap to update.
+ * @param   { char * }      key   The key of the entry to insert.
+ * @param   { void * }      data  The data of the entry to insert.
+ */
+void HashMap_put(HashMap *this, char *key, void *data) {
+  printf("hash: %u", _HashMap_hash(key, strlen(key), 0));
 }
 
 #endif
