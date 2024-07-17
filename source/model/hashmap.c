@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-16 17:41:28
- * @ Modified time: 2024-07-17 09:39:45
+ * @ Modified time: 2024-07-17 09:52:31
  * @ Description:
  * 
  * Defines a hashmap class.
@@ -13,9 +13,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-
-// ! remove
-#include <stdio.h>
 
 #define HASHMAP_KEY_LENGTH (1 << 6)
 #define HASHMAP_HASH_SEED (0)
@@ -358,7 +355,7 @@ int _HashMap_put(HashMap *this, Entry *pEntry) {
   }
 
   // If there is a collision, however...
-  while(pSlot->pNext != NULL) {
+  while(pSlot != NULL) {
     
     // Check for duplicate key
     if(!strcmp(pSlot->key, pEntry->key))
@@ -385,7 +382,7 @@ int _HashMap_put(HashMap *this, Entry *pEntry) {
  */
 int HashMap_put(HashMap *this, char *key, void *pData) {
 
-  // Grab the key of the entry
+  // Grab the slot of the entry
   uint32_t hash = _HashMap_hash(key, strlen(key), HASHMAP_HASH_SEED);
   uint32_t slot = hash % this->limit;
 
@@ -408,11 +405,17 @@ int HashMap_put(HashMap *this, char *key, void *pData) {
   }
 
   // If there is a collision, however...
-  while(pSlot->pNext != NULL) {
+  while(pSlot != NULL) {
     
     // Check for duplicate key
-    if(!strcmp(pSlot->key, pEntry->key))
+    if(!strcmp(pSlot->key, key)) {
+      
+      // Free the created entry
+      free(pEntry);
+
+      // Return failure
       return 0;
+    }
 
     // Grab the next entry in the linked list
     pSlot = pSlot->pNext;
@@ -425,6 +428,41 @@ int HashMap_put(HashMap *this, char *key, void *pData) {
 
   // Success
   return 1;
+}
+
+/**
+ * Returns the data stored at the given key for the hashmap.
+ * 
+ * @param   { HashMap * }   this  The hashmap to read.
+ * @param   { char * }      key   The key of the data.
+ * @return  { void * }            A pointer to the data stored there.
+ */
+void *HashMap_get(HashMap *this, char *key) {
+  
+  // Grab the slot of the entry
+  uint32_t hash = _HashMap_hash(key, strlen(key), HASHMAP_HASH_SEED);
+  uint32_t slot = hash % this->limit;
+
+  // The slot we wish to insert the entry
+  Entry *pSlot = this->entries[slot];
+
+  // The key was not found
+  if(pSlot == NULL)
+    return NULL;
+ 
+  // Traverse the linked list
+  while(strcmp(pSlot->key, key)) {
+
+    // Go to next in list
+    pSlot = pSlot->pNext;
+
+    // The key was not found
+    if(pSlot == NULL)
+      return NULL;
+  }
+
+  // Return the associated data
+  return pSlot->pData;
 }
 
 #endif
