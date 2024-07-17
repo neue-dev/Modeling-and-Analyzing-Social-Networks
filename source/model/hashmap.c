@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-16 17:41:28
- * @ Modified time: 2024-07-17 09:52:31
+ * @ Modified time: 2024-07-17 10:17:56
  * @ Description:
  * 
  * Defines a hashmap class.
@@ -16,6 +16,8 @@
 
 #define HASHMAP_KEY_LENGTH (1 << 6)
 #define HASHMAP_HASH_SEED (0)
+#define HASHMAP_MAX_LOAD (1.1)
+#define HASHMAP_MAX_SIZE (1 << 30)
 
 typedef struct Entry Entry;
 typedef struct HashMap HashMap;
@@ -323,6 +325,30 @@ void HashMap_kill(HashMap *this) {
 }
 
 /**
+ * Attempts to resize the hashmap IF needed.
+ * If none of the conditions are satisfied, it does nothing.
+ * 
+ * @param   { HashMap * }   this  The hashmap to resize.
+ */
+void _HashMap_attemptResize(HashMap *this) {
+  
+  // Compute the load factor
+  // It's just the average length of our linked lists
+  double loadFactor = ((double) this->count) / ((double) this->slots);
+
+  // We can't keep resizing indefinitely because we'll run out of memory smh
+  if(this->limit > HASHMAP_MAX_SIZE)
+    return;
+
+  // If the max load is reached, we attempt a resize
+  // Even if the entire hashmap fills up, collisons will just start happening
+  // That will eventually trigger the loadFactor to go above the max load allowed
+  // Also, we only resize if the hashmap is at least half full
+  if(loadFactor > HASHMAP_MAX_LOAD && this->slots >= this->limit * 0.5)
+    _HashMap_resize(this);
+}
+
+/**
  * Inserts a new element into the hashmap.
  * However, this takes as input the actual entry object.
  * Unlike HashMap_put, _HashMap_put does not instantiate the entry object within its body.
@@ -351,15 +377,20 @@ int _HashMap_put(HashMap *this, Entry *pEntry) {
     this->slots++;
 
     // Return
+    _HashMap_attemptResize(this);
     return 1;
   }
 
   // If there is a collision, however...
-  while(pSlot != NULL) {
+  while(1) {
     
     // Check for duplicate key
     if(!strcmp(pSlot->key, pEntry->key))
       return 0;
+
+    // Break out of loop if null
+    if(pSlot->pNext == NULL)
+      break;
 
     // Grab the next entry in the linked list
     pSlot = pSlot->pNext;
@@ -369,6 +400,7 @@ int _HashMap_put(HashMap *this, Entry *pEntry) {
   _Entry_chain(pSlot, pEntry);
 
   // Success
+  _HashMap_attemptResize(this);
   return 1;
 }
 
@@ -401,11 +433,12 @@ int HashMap_put(HashMap *this, char *key, void *pData) {
     this->count++;
 
     // Return
+    _HashMap_attemptResize(this);
     return 1;
   }
 
   // If there is a collision, however...
-  while(pSlot != NULL) {
+  while(1) {
     
     // Check for duplicate key
     if(!strcmp(pSlot->key, key)) {
@@ -417,6 +450,10 @@ int HashMap_put(HashMap *this, char *key, void *pData) {
       return 0;
     }
 
+    // Get out of loop if NULL
+    if(pSlot->pNext == NULL)
+      break;
+      
     // Grab the next entry in the linked list
     pSlot = pSlot->pNext;
   }
@@ -427,6 +464,7 @@ int HashMap_put(HashMap *this, char *key, void *pData) {
   this->count++;
 
   // Success
+  _HashMap_attemptResize(this);
   return 1;
 }
 
