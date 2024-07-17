@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-16 17:41:28
- * @ Modified time: 2024-07-17 10:35:08
+ * @ Modified time: 2024-07-17 10:43:27
  * @ Description:
  * 
  * Defines a hashmap class.
@@ -97,9 +97,16 @@ Entry *_Entry_new(char *key, void *pData) {
  * Deallocates the memory associated with an instance.
  * Performs additional cleanup if needed too.
  * 
- * @param   { Entry * }   this  The entry to kill.
+ * @param   { Entry * }   this              The entry to kill.
+ * @param   { int }       bShouldFreeData   Whether or not to free its associated data.
 */
-void _Entry_kill(Entry *this) {
+void _Entry_kill(Entry *this, int bShouldFreeData) {
+  
+  // Free its associated data
+  if(bShouldFreeData)
+    free(this->pData);
+
+  // Free the instance itself
   free(this);
 }
 
@@ -320,9 +327,10 @@ HashMap *HashMap_new() {
 /**
  * Deallocates the memory associated with a hashmap.
  * 
- * @param   { HashMap * }   this  The memory to deallocate.
+ * @param   { HashMap * }   this              The memory to deallocate.
+ * @param   { int }         bShouldFreeData   Whether or not to free the data in the entries.
  */
-void HashMap_kill(HashMap *this) {
+void HashMap_kill(HashMap *this, int bShouldFreeData) {
 
   // Make sure we free all the entires too
   for(uint32_t i = 0; i < this->limit; i++) {
@@ -337,7 +345,7 @@ void HashMap_kill(HashMap *this) {
       pNext = pEntry->pNext;
 
       // Free the current entry
-      free(pEntry);
+      _Entry_kill(pEntry, bShouldFreeData);
       
       // Go to next entry
       pEntry = pNext;
