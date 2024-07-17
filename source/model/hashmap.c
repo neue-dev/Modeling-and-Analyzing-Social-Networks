@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-16 17:41:28
- * @ Modified time: 2024-07-17 08:57:05
+ * @ Modified time: 2024-07-17 09:39:45
  * @ Description:
  * 
  * Defines a hashmap class.
@@ -18,19 +18,37 @@
 #include <stdio.h>
 
 #define HASHMAP_KEY_LENGTH (1 << 6)
+#define HASHMAP_HASH_SEED (0)
+
+typedef struct Entry Entry;
+typedef struct HashMap HashMap;
 
 /**
  * Represents an entry in the hashmap.
 */
-typedef struct Entry {
+struct Entry {
   
   // The id of the entry
   char key[HASHMAP_KEY_LENGTH + 1];
 
   // The data associated with the entry
-  void *data;
+  void *pData;
 
-} Entry;
+  // The next entry in the linked list
+  // Used to handle collisions in the hashmap
+  Entry *pNext;
+
+};
+
+/**
+ * The entry interface.
+ */
+Entry *_Entry_alloc();
+Entry *_Entry_init(Entry *this, char *key, void *pData);
+Entry *_Entry_new(char *key, void *pData);
+void _Entry_kill(Entry *this);
+
+void _Entry_chain(Entry *this, Entry *pNext);
 
 /**
  * Allocates space for a new entry instance.
@@ -46,16 +64,19 @@ Entry *_Entry_alloc() {
 /**
  * Initializes a given entry instance with the provided values.
  * 
- * @param   { Entry * }   this  The entry to initialize.
- * @param   { char * }    key   The key of the given entry.
- * @param   { void * }    data  The data stored by the entry.
- * @return  { Entry * }         The initialized version of the entry.
+ * @param   { Entry * }   this    The entry to initialize.
+ * @param   { char * }    key     The key of the given entry.
+ * @param   { void * }    pData   The data stored by the entry.
+ * @return  { Entry * }           The initialized version of the entry.
 */
-Entry *_Entry_init(Entry *this, char *key, void *data) {
+Entry *_Entry_init(Entry *this, char *key, void *pData) {
   
   // Save the id and the data
   strncpy(this->key, key, HASHMAP_KEY_LENGTH);
-  this->data = data;
+  this->pData = pData;
+
+  // Set the next to null by default
+  this->pNext = NULL;
 
   // Return the new initted entry
   return this;
@@ -65,12 +86,12 @@ Entry *_Entry_init(Entry *this, char *key, void *data) {
  * Creates a new hashma entry.
  * It initializes the entry with the provided parameters.
  * 
- * @param   { char * }    key   The id of the given entry.
- * @param   { void * }    data  The data stored by the entry.
- * @return  { Entry * }         The new initialized entry.
+ * @param   { char * }    key     The id of the given entry.
+ * @param   { void * }    pData   The data stored by the entry.
+ * @return  { Entry * }           The new initialized entry.
 */
-Entry *Entry_new(char *key, void *data) {
-  return _Entry_init(_Entry_alloc(), key, data);
+Entry *_Entry_new(char *key, void *pData) {
+  return _Entry_init(_Entry_alloc(), key, pData);
 }
 
 /**
@@ -79,26 +100,52 @@ Entry *Entry_new(char *key, void *data) {
  * 
  * @param   { Entry * }   this  The entry to kill.
 */
-void Entry_kill(Entry *this) {
+void _Entry_kill(Entry *this) {
   free(this);
+}
+
+/**
+ * Chains the given next entry unto the current one.
+ * 
+ * @param   { Entry * }   this    The entry to modify.
+ * @param   { Entry * }   pNext   The entry to chain.
+ */
+void _Entry_chain(Entry *this, Entry *pNext) {
+  this->pNext = pNext;
 }
 
 /**
  * Represents the actual hashmap data structure.
 */
-typedef struct HashMap {
+struct HashMap {
 
   // The contents of the hashmap
   Entry **entries;
 
   // The number of entries in the hashmap
-  uint32_t size;
+  uint32_t count;
+
+  // The number of occupied slots in the hashmap
+  // This is different from the number of entries 
+  // ...because slots with collisions produce linked lists
+  uint32_t slots; 
 
   // The maximum number of entries held by the hashmap
   // This changes when the hashmap resizes
   uint32_t limit;
 
-} HashMap;
+};
+
+/**
+ * The hashmap interface.
+ */
+HashMap *HashMap_alloc();
+HashMap *HashMap_init(HashMap *this);
+HashMap *HashMap_new();
+void HashMap_kill(HashMap *this);
+
+int _HashMap_put(HashMap *this, Entry *pEntry);
+int HashMap_put(HashMap *this, char *key, void *pData);
 
 /**
  * This just jumbles of the value of k and is an arbitrary formula.
@@ -129,11 +176,11 @@ static inline uint32_t _HashMap_hash(char *key, uint32_t length, uint32_t seed) 
   
   uint32_t h = seed;
   uint32_t k;
-  int wordSize = sizeof(uint32_t);
+  short wordSize = sizeof(uint32_t);
 
   // We're iterating over 4 characters at a time within the key
   // We do this since an unsigned int has 4 bytes
-  for(int i = length >> 2; i; i--) {
+  for(uint32_t i = length >> 2; i; i--) {
 
     // We copy 4 bytes of the key unto the location of k
     memcpy(&k, key, wordSize);
@@ -151,7 +198,7 @@ static inline uint32_t _HashMap_hash(char *key, uint32_t length, uint32_t seed) 
   // We deal with those and use them to further transform h
   // length & 0b11 makes it clear we're getting the last two bits of the number
   k = 0;
-  for(int i = length & 0b11; i; i--) {
+  for(short i = length & 0b11; i; i--) {
     k <<= 8;
     k |= key[i - 1];
   }
@@ -167,6 +214,65 @@ static inline uint32_t _HashMap_hash(char *key, uint32_t length, uint32_t seed) 
 
   // Return the generated hash
 	return h;
+}
+
+/**
+ * Resizes the hashmap when space has run out.
+ * 
+ * @param   { HashMap * }   this  The hashmap to resize.
+ */
+static inline void _HashMap_resize(HashMap *this) {
+
+  // Get a reference to the old entries
+  Entry **pOldEntries = this->entries;
+  
+  // Set the slots to 0 
+  // We have to recompute this value
+  this->slots = 0;
+  
+  // Compute the new size
+  // The way we have this implemented means the limit will always be 2^n - 1
+  this->limit <<= 1;
+  this->limit += 1;
+
+  // Reallocate the entries variable
+  this->entries = calloc(this->limit, sizeof(Entry *));
+
+  // Pointers we use to traverse our arrays
+  Entry *pOldEntry;
+  Entry *pNewEntry;
+
+  // Remap each of the old entries
+  for(uint32_t i = 0; i < this->limit >> 1; i++) {
+    
+    // Grab the current entry
+    pOldEntry = pOldEntries[i];
+
+    // Skip the null entries
+    if(pOldEntry == NULL)
+      continue;
+
+    // Insert the entries into the new space
+    do {
+
+      // A temp pointer 
+      Entry *pPrevEntry;
+
+      // Insert the old entry
+      _HashMap_put(this, pOldEntry);
+
+      // Grab the entry that was adjacent to pOldEntry in old hashmap
+      pPrevEntry = pOldEntry;
+      pOldEntry = pPrevEntry->pNext;
+
+      // Set the next of the prev entry to null, since it's been remapped
+      _Entry_chain(pPrevEntry, NULL);
+
+    } while(pOldEntry != NULL);
+  }
+
+  // Get rid of the old array of pointers
+  free(pOldEntries);
 }
 
 /**
@@ -192,7 +298,8 @@ HashMap *_HashMap_init(HashMap *this) {
 
   // We start with 16 slots
   this->limit = initialLimit;
-  this->size = 0;
+  this->slots = 0;
+  this->count = 0;
 
   // Init the entrie pointer array
   this->entries = calloc(initialLimit, sizeof(Entry *));
@@ -210,14 +317,114 @@ HashMap *HashMap_new() {
 }
 
 /**
+ * Deallocates the memory associated with a hashmap.
+ * 
+ * @param   { HashMap * }   this  The memory to deallocate.
+ */
+void HashMap_kill(HashMap *this) {
+  free(this);
+}
+
+/**
+ * Inserts a new element into the hashmap.
+ * However, this takes as input the actual entry object.
+ * Unlike HashMap_put, _HashMap_put does not instantiate the entry object within its body.
+ * NOTE THAT THIS DOES NOT INCREMENT THE COUNT OF THE HASHMAP.
+ * Fails on duplicate keys.
+ * 
+ * @param   { HashMap * }   this    The hashmap to update.
+ * @param   { Entry * }     pEntry  The entry to put.
+ * @return  { int }                 Whether or not the insertion was successful.
+ */
+int _HashMap_put(HashMap *this, Entry *pEntry) {
+  
+  // Grab the key of the entry
+  char *key = pEntry->key;
+  uint32_t hash = _HashMap_hash(key, strlen(key), HASHMAP_HASH_SEED);
+  uint32_t slot = hash % this->limit;
+
+  // The slot we wish to insert the entry
+  Entry *pSlot = this->entries[slot];
+
+  // There's nothing there
+  if(pSlot == NULL) {
+    
+    // Insert the entry into the slot
+    this->entries[slot] = pEntry;
+    this->slots++;
+
+    // Return
+    return 1;
+  }
+
+  // If there is a collision, however...
+  while(pSlot->pNext != NULL) {
+    
+    // Check for duplicate key
+    if(!strcmp(pSlot->key, pEntry->key))
+      return 0;
+
+    // Grab the next entry in the linked list
+    pSlot = pSlot->pNext;
+  }
+  
+  // Finally, chain the current entry to the last one
+  _Entry_chain(pSlot, pEntry);
+
+  // Success
+  return 1;
+}
+
+/**
  * Inserts a new element into the hashmap.
  * 
- * @param   { HashMap * }   this  The hashmap to update.
- * @param   { char * }      key   The key of the entry to insert.
- * @param   { void * }      data  The data of the entry to insert.
+ * @param   { HashMap * }   this    The hashmap to update.
+ * @param   { char * }      key     The key of the entry to insert.
+ * @param   { void * }      pData   The data of the entry to insert.
+ * @return  { int }                 Indicates whether or not the operation was successful.
  */
-void HashMap_put(HashMap *this, char *key, void *data) {
-  printf("hash: %u", _HashMap_hash(key, strlen(key), 0));
+int HashMap_put(HashMap *this, char *key, void *pData) {
+
+  // Grab the key of the entry
+  uint32_t hash = _HashMap_hash(key, strlen(key), HASHMAP_HASH_SEED);
+  uint32_t slot = hash % this->limit;
+
+  // The slot we wish to insert the entry
+  Entry *pSlot = this->entries[slot];
+
+  // Create the entry too
+  Entry *pEntry = _Entry_new(key, pData);
+
+  // There's nothing there
+  if(pSlot == NULL) {
+    
+    // Insert the entry into the slot
+    this->entries[slot] = pEntry;
+    this->slots++;
+    this->count++;
+
+    // Return
+    return 1;
+  }
+
+  // If there is a collision, however...
+  while(pSlot->pNext != NULL) {
+    
+    // Check for duplicate key
+    if(!strcmp(pSlot->key, pEntry->key))
+      return 0;
+
+    // Grab the next entry in the linked list
+    pSlot = pSlot->pNext;
+  }
+  
+  // Finally, chain the current entry to the last one
+  // Increment the count too
+  _Entry_chain(pSlot, pEntry);
+  this->count++;
+
+  // Success
+  return 1;
 }
 
 #endif
