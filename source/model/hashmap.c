@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-16 17:41:28
- * @ Modified time: 2024-07-17 10:17:56
+ * @ Modified time: 2024-07-17 10:35:08
  * @ Description:
  * 
  * Defines a hashmap class.
@@ -143,8 +143,10 @@ HashMap *HashMap_init(HashMap *this);
 HashMap *HashMap_new();
 void HashMap_kill(HashMap *this);
 
+void _HashMap_attemptResize(HashMap *this);
 int _HashMap_put(HashMap *this, Entry *pEntry);
 int HashMap_put(HashMap *this, char *key, void *pData);
+void *HashMap_get(HashMap *this, char *key);
 
 /**
  * This just jumbles of the value of k and is an arbitrary formula.
@@ -321,6 +323,28 @@ HashMap *HashMap_new() {
  * @param   { HashMap * }   this  The memory to deallocate.
  */
 void HashMap_kill(HashMap *this) {
+
+  // Make sure we free all the entires too
+  for(uint32_t i = 0; i < this->limit; i++) {
+    
+    Entry *pEntry = this->entries[i];
+    Entry *pNext = NULL;
+
+    // If there's something at this slot
+    while(pEntry != NULL) {
+
+      // Grab the pointer to next entry
+      pNext = pEntry->pNext;
+
+      // Free the current entry
+      free(pEntry);
+      
+      // Go to next entry
+      pEntry = pNext;
+    }
+  }
+
+  // Free the main memory
   free(this);
 }
 
