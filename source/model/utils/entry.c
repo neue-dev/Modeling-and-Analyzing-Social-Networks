@@ -1,0 +1,117 @@
+/**
+ * @ Author: Mo David
+ * @ Create Time: 2024-07-19 13:49:08
+ * @ Modified time: 2024-07-19 13:52:15
+ * @ Description:
+ * 
+ * An entry we use for both hashmaps and queues.
+ */
+
+#ifndef ENTRY_C
+#define ENTRY_C
+
+#include <stdlib.h>
+
+#define ENTRY_KEY_LENGTH (1 << 6)
+
+typedef struct Entry Entry;
+
+/**
+ * Represents an entry in the hashmap.
+*/
+struct Entry {
+  
+  // The id of the entry
+  char key[ENTRY_KEY_LENGTH + 1];
+
+  // The data associated with the entry
+  void *pData;
+
+  // The next entry in the linked list
+  // Used to handle collisions in the hashmap
+  Entry *pNext;
+
+};
+
+/**
+ * The entry interface.
+ */
+Entry *_Entry_alloc();
+Entry *_Entry_init(Entry *this, char *key, void *pData);
+Entry *Entry_new(char *key, void *pData);
+void Entry_kill(Entry *this, int bShouldFreeData);
+
+void Entry_chain(Entry *this, Entry *pNext);
+
+/**
+ * Allocates space for a new entry instance.
+ * 
+ * @return  { Entry * }   A pointer to the allocated space.
+*/
+Entry *_Entry_alloc() {
+  Entry *pEntry = calloc(1, sizeof(*pEntry));
+
+  return pEntry;
+}
+
+/**
+ * Initializes a given entry instance with the provided values.
+ * 
+ * @param   { Entry * }   this    The entry to initialize.
+ * @param   { char * }    key     The key of the given entry.
+ * @param   { void * }    pData   The data stored by the entry.
+ * @return  { Entry * }           The initialized version of the entry.
+*/
+Entry *_Entry_init(Entry *this, char *key, void *pData) {
+  
+  // Save the id and the data
+  strncpy(this->key, key, ENTRY_KEY_LENGTH);
+  this->pData = pData;
+
+  // Set the next to null by default
+  this->pNext = NULL;
+
+  // Return the new initted entry
+  return this;
+}
+
+/**
+ * Creates a new hashma entry.
+ * It initializes the entry with the provided parameters.
+ * 
+ * @param   { char * }    key     The id of the given entry.
+ * @param   { void * }    pData   The data stored by the entry.
+ * @return  { Entry * }           The new initialized entry.
+*/
+Entry *Entry_new(char *key, void *pData) {
+  return _Entry_init(_Entry_alloc(), key, pData);
+}
+
+/**
+ * Deallocates the memory associated with an instance.
+ * Performs additional cleanup if needed too.
+ * 
+ * @param   { Entry * }   this              The entry to kill.
+ * @param   { int }       bShouldFreeData   Whether or not to free its associated data.
+*/
+void Entry_kill(Entry *this, int bShouldFreeData) {
+  
+  // Free its associated data
+  if(bShouldFreeData)
+    free(this->pData);
+
+  // Free the instance itself
+  free(this);
+}
+
+/**
+ * Chains the given next entry unto the current one.
+ * 
+ * @param   { Entry * }   this    The entry to modify.
+ * @param   { Entry * }   pNext   The entry to chain.
+ */
+void Entry_chain(Entry *this, Entry *pNext) {
+  this->pNext = pNext;
+}
+
+#endif

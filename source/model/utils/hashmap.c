@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-16 17:41:28
- * @ Modified time: 2024-07-19 13:28:48
+ * @ Modified time: 2024-07-19 13:51:57
  * @ Description:
  * 
  * Defines a hashmap class.
@@ -10,115 +10,17 @@
 #ifndef HASHMAP_C
 #define HASHMAP_C
 
+#include "./entry.c"
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
 
-#define HASHMAP_KEY_LENGTH (1 << 6)
 #define HASHMAP_HASH_SEED (0)
 #define HASHMAP_MAX_LOAD (1.1)
 #define HASHMAP_MAX_SIZE (1 << 30)
 
-typedef struct Entry Entry;
 typedef struct HashMap HashMap;
-
-/**
- * Represents an entry in the hashmap.
-*/
-struct Entry {
-  
-  // The id of the entry
-  char key[HASHMAP_KEY_LENGTH + 1];
-
-  // The data associated with the entry
-  void *pData;
-
-  // The next entry in the linked list
-  // Used to handle collisions in the hashmap
-  Entry *pNext;
-
-};
-
-/**
- * The entry interface.
- */
-Entry *_Entry_alloc();
-Entry *_Entry_init(Entry *this, char *key, void *pData);
-Entry *_Entry_new(char *key, void *pData);
-void _Entry_kill(Entry *this, int bShouldFreeData);
-
-void _Entry_chain(Entry *this, Entry *pNext);
-
-/**
- * Allocates space for a new entry instance.
- * 
- * @return  { Entry * }   A pointer to the allocated space.
-*/
-Entry *_Entry_alloc() {
-  Entry *pEntry = calloc(1, sizeof(*pEntry));
-
-  return pEntry;
-}
-
-/**
- * Initializes a given entry instance with the provided values.
- * 
- * @param   { Entry * }   this    The entry to initialize.
- * @param   { char * }    key     The key of the given entry.
- * @param   { void * }    pData   The data stored by the entry.
- * @return  { Entry * }           The initialized version of the entry.
-*/
-Entry *_Entry_init(Entry *this, char *key, void *pData) {
-  
-  // Save the id and the data
-  strncpy(this->key, key, HASHMAP_KEY_LENGTH);
-  this->pData = pData;
-
-  // Set the next to null by default
-  this->pNext = NULL;
-
-  // Return the new initted entry
-  return this;
-}
-
-/**
- * Creates a new hashma entry.
- * It initializes the entry with the provided parameters.
- * 
- * @param   { char * }    key     The id of the given entry.
- * @param   { void * }    pData   The data stored by the entry.
- * @return  { Entry * }           The new initialized entry.
-*/
-Entry *_Entry_new(char *key, void *pData) {
-  return _Entry_init(_Entry_alloc(), key, pData);
-}
-
-/**
- * Deallocates the memory associated with an instance.
- * Performs additional cleanup if needed too.
- * 
- * @param   { Entry * }   this              The entry to kill.
- * @param   { int }       bShouldFreeData   Whether or not to free its associated data.
-*/
-void _Entry_kill(Entry *this, int bShouldFreeData) {
-  
-  // Free its associated data
-  if(bShouldFreeData)
-    free(this->pData);
-
-  // Free the instance itself
-  free(this);
-}
-
-/**
- * Chains the given next entry unto the current one.
- * 
- * @param   { Entry * }   this    The entry to modify.
- * @param   { Entry * }   pNext   The entry to chain.
- */
-void _Entry_chain(Entry *this, Entry *pNext) {
-  this->pNext = pNext;
-}
 
 /**
  * Represents the actual hashmap data structure.
@@ -274,7 +176,7 @@ static inline void _HashMap_resize(HashMap *this) {
       pOldEntry = pPrevEntry->pNext;
 
       // Set the next of the prev entry to null, since it's been remapped
-      _Entry_chain(pPrevEntry, NULL);
+      Entry_chain(pPrevEntry, NULL);
 
     } while(pOldEntry != NULL);
   }
@@ -345,7 +247,7 @@ void HashMap_kill(HashMap *this, int bShouldFreeData) {
       pNext = pEntry->pNext;
 
       // Free the current entry
-      _Entry_kill(pEntry, bShouldFreeData);
+      Entry_kill(pEntry, bShouldFreeData);
       
       // Go to next entry
       pEntry = pNext;
@@ -429,7 +331,7 @@ int _HashMap_put(HashMap *this, Entry *pEntry) {
   }
   
   // Finally, chain the current entry to the last one
-  _Entry_chain(pSlot, pEntry);
+  Entry_chain(pSlot, pEntry);
 
   // Success
   _HashMap_attemptResize(this);
@@ -454,7 +356,7 @@ int HashMap_put(HashMap *this, char *key, void *pData) {
   Entry *pSlot = this->entries[slot];
 
   // Create the entry too
-  Entry *pEntry = _Entry_new(key, pData);
+  Entry *pEntry = Entry_new(key, pData);
 
   // There's nothing there
   if(pSlot == NULL) {
@@ -492,7 +394,7 @@ int HashMap_put(HashMap *this, char *key, void *pData) {
   
   // Finally, chain the current entry to the last one
   // Increment the count too
-  _Entry_chain(pSlot, pEntry);
+  Entry_chain(pSlot, pEntry);
   this->count++;
 
   // Success

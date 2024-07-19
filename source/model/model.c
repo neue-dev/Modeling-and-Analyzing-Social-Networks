@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-19 13:46:18
+ * @ Modified time: 2024-07-19 13:54:06
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -12,7 +12,7 @@
 #define MODEL_C
 
 #include "../io/file.c"
-#include "./hashmap.c"
+#include "./utils/hashmap.c"
 #include "./record.c"
 #include "./node.c"
 

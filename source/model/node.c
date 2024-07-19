@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-17 10:27:36
- * @ Modified time: 2024-07-19 13:40:44
+ * @ Modified time: 2024-07-19 13:53:23
  * @ Description:
  * 
  * The node class.
@@ -10,7 +10,7 @@
 #ifndef NODE_C
 #define NODE_C
 
-#include "./hashmap.c"
+#include "./utils/hashmap.c"
 
 #define NODE_ID_LENGTH (1 << 6)
 
