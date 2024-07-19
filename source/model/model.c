@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-19 13:41:12
+ * @ Modified time: 2024-07-19 13:46:18
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -23,7 +23,7 @@ struct Model {
   // Stores the nodes within the model
   HashMap *nodes;
 
-} *MODEL;
+} *_MODEL;
 
 /**
  * Initializes the model we're going to use.
@@ -33,10 +33,10 @@ struct Model {
 void Model_init() {
 
   // Allocate the model
-  MODEL = calloc(1, sizeof(*MODEL));
+  _MODEL = calloc(1, sizeof(*_MODEL));
   
   // Create a new hashmap
-  MODEL->nodes = HashMap_new();
+  _MODEL->nodes = HashMap_new();
 }
 
 /**
@@ -55,7 +55,7 @@ Node *Model_addNode(char *id) {
   Node *pNode = Node_new(id, pRecord);
 
   // Save the node in the hashmap
-  HashMap_put(MODEL->nodes, id, pNode);
+  HashMap_put(_MODEL->nodes, id, pNode);
 
   // Return the node
   return pNode;
@@ -72,8 +72,8 @@ Node *Model_addNode(char *id) {
 void Model_addAdj(char *sourceId, char *targetId) {
 
   // The source and target nodes
-  Node *pSourceNode = HashMap_get(MODEL->nodes, sourceId);
-  Node *pTargetNode = HashMap_get(MODEL->nodes, targetId);
+  Node *pSourceNode = HashMap_get(_MODEL->nodes, sourceId);
+  Node *pTargetNode = HashMap_get(_MODEL->nodes, targetId);
 
   // If the source node does not exist in the hashmap yet
   if(pSourceNode == NULL) 
