@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 18:40:56
- * @ Modified time: 2024-07-19 19:16:24
+ * @ Modified time: 2024-07-19 19:51:42
  * @ Description:
  * 
  * The main flow of the application.
@@ -10,7 +10,13 @@
 #ifndef APP_C
 #define APP_C
 
+#include "./io/ui.c"
 #include "./model/model.c"
+
+#define APP_DEFAULT_DATASET "./data/Caltech36.txt"
+#define APP_INDENT_INFO "[*]"
+#define APP_INDENT_SUCCESS " / "
+#define APP_INDENT_FAILURE " X "
 
 typedef enum AppState AppState;
 
@@ -33,11 +39,21 @@ struct App {
 */
 void App_init() {
 
+  // Init the UI object first
+  UI_init();
+
+  // Print init state
+  UI_indent(APP_INDENT_INFO); UI_s("Initializing the app..."); UI__();
+
   // Init the model
   Model_init();
 
   // Read the data we want
-  Model_readData("./data/Trinity100.txt");
+  Model_readData(APP_DEFAULT_DATASET);
+
+  // Say that we're done initting
+  UI_indent(APP_INDENT_SUCCESS); UI_s("Loaded default dataset: "); UI_s(APP_DEFAULT_DATASET); UI__();
+  UI_indent(APP_INDENT_SUCCESS); UI_s("App initialized."); UI__(); UI__();
 
   // Run the menu after the init
   App.appState = APP_MENU;
@@ -48,7 +64,7 @@ void App_init() {
 */
 void App_menu() {
   
-  // ! Remove this later
+  
   App.appState = APP_EXIT;
 }
 
