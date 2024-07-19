@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-16 17:41:28
- * @ Modified time: 2024-07-17 10:43:27
+ * @ Modified time: 2024-07-19 10:07:06
  * @ Description:
  * 
  * Defines a hashmap class.
@@ -45,7 +45,7 @@ struct Entry {
 Entry *_Entry_alloc();
 Entry *_Entry_init(Entry *this, char *key, void *pData);
 Entry *_Entry_new(char *key, void *pData);
-void _Entry_kill(Entry *this);
+void _Entry_kill(Entry *this, int bShouldFreeData);
 
 void _Entry_chain(Entry *this, Entry *pNext);
 
@@ -148,7 +148,7 @@ struct HashMap {
 HashMap *HashMap_alloc();
 HashMap *HashMap_init(HashMap *this);
 HashMap *HashMap_new();
-void HashMap_kill(HashMap *this);
+void HashMap_kill(HashMap *this, int bShouldFreeData);
 
 void _HashMap_attemptResize(HashMap *this);
 int _HashMap_put(HashMap *this, Entry *pEntry);

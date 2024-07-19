@@ -1,1 +1,7 @@
-implement automatic hashmap resizing
+NEEDED:
+0. READ DATA AND STORE IN MEMORY IN PROPER STRUCT
+1. ALLOW TRAVERSING THE DATA STRUCT
+
+NOT NECESSARY, BUT GOOD TO HAVE
+0. serialize data
+1. use multithreading to allow reading data and interacting with it while this is happening (of course display loading state too)
