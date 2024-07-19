@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:14:59
- * @ Modified time: 2024-07-19 10:49:29
+ * @ Modified time: 2024-07-19 11:57:36
  * @ Description:
  */
 
@@ -72,7 +72,23 @@ int File_read(File *this, char *format, ...) {
     return 0;
 
   // Call fscanf with our args
-  return vfscanf(this->pFile, format, va_ptr);
+  int result = vfscanf(this->pFile, format, va_ptr);
+
+  // Return 0 for EOF
+  if(result == EOF) 
+    return 0;
+
+  // Otherwise, return result
+  return result;
+}
+
+/**
+ * Close the associated file.
+ * 
+ * @param   { File * }  this  The file to close.
+*/
+void File_close(File *this) {
+  fclose(this->pFile);
 }
 
 #endif

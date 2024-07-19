@@ -2,3 +2,4 @@ Resources I consulted while doing this project.
 
 [ murmur hash: a good hashing function ]..........https://en.wikipedia.org/wiki/MurmurHash
 [ inline functions in C ].........................https://stackoverflow.com/questions/31108159/what-is-the-use-of-the-inline-keyword-in-c
+[ passing variable arguments ]....................https://stackoverflow.com/questions/1056411/how-to-pass-variable-number-of-arguments-to-printf-sprintf
