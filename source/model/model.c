@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-19 19:06:51
+ * @ Modified time: 2024-07-19 21:02:46
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -21,7 +21,11 @@ struct Model {
   // Stores the nodes within the model
   HashMap *nodes;
 
-} MODEL;
+  // We use this for garbage collection later on
+  Node **nodePointers;
+  int nodeCount;
+
+} Model;
 
 /**
  * Initializes the model we're going to use.
@@ -31,7 +35,10 @@ struct Model {
 void Model_init() {
   
   // Create a new hashmap
-  MODEL.nodes = HashMap_new();
+  Model.nodes = HashMap_new();
+
+  // No nodes yet
+  Model.nodeCount = 0;
 }
 
 /**
@@ -50,7 +57,10 @@ Node *Model_addNode(char *id) {
   Node *pNode = Node_new(id, pRecord);
 
   // Save the node in the hashmap
-  HashMap_put(MODEL.nodes, id, pNode);
+  HashMap_put(Model.nodes, id, pNode);
+
+  // Add the reference to the list of node pointers
+  Model.nodePointers[Model.nodeCount++] = pNode;
 
   // Return the node
   return pNode;
@@ -67,8 +77,8 @@ Node *Model_addNode(char *id) {
 void Model_addAdj(char *sourceId, char *targetId) {
 
   // The source and target nodes
-  Node *pSourceNode = HashMap_get(MODEL.nodes, sourceId);
-  Node *pTargetNode = HashMap_get(MODEL.nodes, targetId);
+  Node *pSourceNode = HashMap_get(Model.nodes, sourceId);
+  Node *pTargetNode = HashMap_get(Model.nodes, targetId);
 
   // If the source node does not exist in the hashmap yet
   if(pSourceNode == NULL) 
@@ -83,11 +93,34 @@ void Model_addAdj(char *sourceId, char *targetId) {
 }
 
 /**
+ * Clears the contents of the model.
+ * Makes sure to perform proper garbage collection.
+*/
+void Model_clearData() {
+  
+  // Kill the hashmap first
+  // We don't delete the data inside because we clean that up ourselves
+  HashMap_kill(Model.nodes, 0);
+
+  // We kill the associated data with each of the nodes
+  while(Model.nodeCount--)
+    Node_kill(Model.nodePointers[Model.nodeCount], 1);
+
+  // Free the nodePointers
+  free(Model.nodePointers);
+
+  // Create a new hashmap
+  // Reset node count (although that's a bit redudant)
+  Model.nodes = HashMap_new();
+  Model.nodeCount = 0;
+}
+
+/**
  * Reads the file and converts its data into our model.
  * 
  * @param   { char * }  filepath  The path to the file to read.
 */
-void Model_readData(char *filepath) {
+void Model_loadData(char *filepath) {
   
   // Create a file to the dataset
   File file;
@@ -98,9 +131,15 @@ void Model_readData(char *filepath) {
   char sourceId[32];
   char targetId[32];
 
-  // Skip the first line
+  // Metadata
+  int nodeCount;
+  int edgeCount;
+
   // The first line only contains metadata
-  File_read(&file, "%s %s", &sourceId, &targetId);
+  File_read(&file, "%d %d", &nodeCount, &edgeCount);
+
+  // Init the node pointer array
+  Model.nodePointers = calloc(nodeCount, sizeof(Node *));
 
   // Read the file contents
   // Also generates the model in memory

@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 18:40:56
- * @ Modified time: 2024-07-19 20:46:50
+ * @ Modified time: 2024-07-19 21:07:32
  * @ Description:
  * 
  * The main flow of the application.
@@ -45,35 +45,6 @@ struct App {
 } App;
 
 /**
- * Initialize the app state.
-*/
-void App_init() {
-
-  // Init the UI object first
-  UI_init();
-
-  // Print init state
-  UI_indent(APP_INDENT_INFO); UI_s("Initializing the app..."); UI__();
-
-  // Init the model
-  Model_init();
-
-  // Read the data we want
-  Model_readData(APP_DEFAULT_DATASET);
-
-  // Say that we're done initting
-  UI_indent(APP_INDENT_SUCCESS); UI_s("Loaded default dataset: "); UI_s(APP_DEFAULT_DATASET); UI__();
-  UI_indent(APP_INDENT_SUCCESS); UI_s("App initialized."); UI__(); 
-  UI__();
-
-  // Set the active dataset
-  strcpy(App.activeDataset, APP_DEFAULT_DATASET);
-
-  // Run the menu after the init
-  App.appState = APPSTATE_MENU;
-}
-
-/**
  * Prints the app header.
 */
 void App_header() {
@@ -83,6 +54,30 @@ void App_header() {
   UI_indent(""); UI_s("Modeling and Analyzing Networks"); UI__(); 
   UI_indent(""); UI_s("\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\""); UI__();
   UI__();
+}
+
+/**
+ * Initialize the app state.
+*/
+void App_init() {
+
+  // Init the UI object first
+  UI_init();
+
+  // Print init state
+  UI_s("Initializing the app..."); UI__();
+
+  // Init the model
+  Model_init();
+
+  // Read the data we want
+  Model_loadData(APP_DEFAULT_DATASET);
+
+  // Set the active dataset
+  strcpy(App.activeDataset, APP_DEFAULT_DATASET);
+
+  // Run the menu after the init
+  App.appState = APPSTATE_MENU;
 }
 
 /**
@@ -126,8 +121,17 @@ void App_load() {
   // Wait for user input
   char filepath[256];
   scanf("%s", filepath);
+  UI__();
 
-  // Load the specific dataset
+  // ! check if filepath valid first
+
+  // Clear the model first
+  UI_indent(APP_INDENT_SUBINFO); UI_s("Clearing previous model data...."); UI__();
+  Model_clearData();
+
+  // Load the selected dataset
+  UI_indent(APP_INDENT_SUBINFO); UI_s("Loading specified dataset...."); UI__();
+  Model_loadData(filepath);
 
   // Change the active dataset
   strcpy(App.activeDataset, filepath);
@@ -136,10 +140,16 @@ void App_load() {
   App.appState = APPSTATE_MENU;
 }
 
+/**
+ * Runs the model and displays the friends of a given node.
+*/
 void App_friends() {
   App.appState = APPSTATE_MENU;
 }
 
+/**
+ * Runs the model and looks for paths within the data.
+*/
 void App_connections() {
   App.appState = APPSTATE_MENU;
 }
@@ -152,8 +162,9 @@ void App_main() {
 
   do {
 
-    // Print the header each time
-    App_header();
+    // Print the header each time after init
+    if(App.appState != APPSTATE_INIT)
+      App_header();
 
     // Execute the correct oage
     switch(App.appState) {
