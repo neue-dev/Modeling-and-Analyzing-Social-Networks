@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 18:40:56
- * @ Modified time: 2024-07-19 20:14:31
+ * @ Modified time: 2024-07-19 20:46:50
  * @ Description:
  * 
  * The main flow of the application.
@@ -14,18 +14,23 @@
 #include "./model/model.c"
 
 #define APP_DEFAULT_DATASET "./data/Caltech36.txt"
-#define APP_INDENT_INFO "[*]"
-#define APP_INDENT_EMPTY "[ ]"
-#define APP_INDENT_SUBINFO " | "
+
+#define APP_INDENT_INFO "[] "
+#define APP_INDENT_EMPTY "   "
+#define APP_INDENT_PROMPT "[> "
+#define APP_INDENT_SUBINFO "[| "
 #define APP_INDENT_SUCCESS " ! "
 #define APP_INDENT_FAILURE " X "
 
 typedef enum AppState AppState;
 
 enum AppState {
-  APP_INIT,
-  APP_MENU,
-  APP_EXIT,
+  APPSTATE_INIT,
+  APPSTATE_MENU,
+  APPSTATE_LOAD,
+  APPSTATE_FRIENDS,
+  APPSTATE_CONNECTIONS,
+  APPSTATE_EXIT,
 };
 
 struct App {
@@ -33,6 +38,9 @@ struct App {
   // The current state of the app
   // In other words, what page we're on
   AppState appState;
+
+  // The path to the active dataset
+  char activeDataset[256];
 
 } App;
 
@@ -58,23 +66,82 @@ void App_init() {
   UI_indent(APP_INDENT_SUCCESS); UI_s("App initialized."); UI__(); 
   UI__();
 
+  // Set the active dataset
+  strcpy(App.activeDataset, APP_DEFAULT_DATASET);
+
   // Run the menu after the init
-  App.appState = APP_MENU;
+  App.appState = APPSTATE_MENU;
+}
+
+/**
+ * Prints the app header.
+*/
+void App_header() {
+  
+  // Print the header  
+  UI_clear(); UI__();
+  UI_indent(""); UI_s("Modeling and Analyzing Networks"); UI__(); 
+  UI_indent(""); UI_s("\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\""); UI__();
+  UI__();
 }
 
 /**
  * Show the main menu.
 */
 void App_menu() {
-  
+
   // Print the options
   UI_indent(APP_INDENT_INFO); UI_s("Select what to do next."); UI__();
-  UI_indent(APP_INDENT_SUBINFO); UI_indent("-0-"); UI_s("Load another dataset."); UI__();
-  UI_indent(APP_INDENT_SUBINFO); UI_indent("-1-"); UI_s("Display friend list."); UI__();
-  UI_indent(APP_INDENT_SUBINFO); UI_indent("-2-"); UI_s("Display connections."); UI__();
+  UI__();
+  UI_indent(APP_INDENT_SUBINFO); UI_indent("1. "); UI_s("Load another dataset."); UI__();
+  UI_indent(APP_INDENT_SUBINFO); UI_indent("2. "); UI_s("Display friend list."); UI__();
+  UI_indent(APP_INDENT_SUBINFO); UI_indent("3. "); UI_s("Display connections."); UI__();
+  UI_indent(APP_INDENT_SUBINFO); UI_indent("0. "); UI_s("Exit the app."); UI__();
   UI__();
   
-  App.appState = APP_EXIT;
+  // Wait for user input
+  int option = 0;
+  scanf("%d", &option);
+
+  // Go to the next page
+  switch(option) {
+    case 0: App.appState = APPSTATE_EXIT; break;
+    case 1: App.appState = APPSTATE_LOAD; break;
+    case 2: App.appState = APPSTATE_FRIENDS; break;
+    case 3: App.appState = APPSTATE_CONNECTIONS; break;
+    default: App.appState = APPSTATE_EXIT; break;
+  }
+}
+
+/**
+ * Load another dataset.
+*/
+void App_load() {
+
+  // print the prompt
+  UI_indent(APP_INDENT_INFO); UI_s("Specify a dataset to load."); UI__(); 
+  UI__();
+  UI_indent(APP_INDENT_PROMPT);
+
+  // Wait for user input
+  char filepath[256];
+  scanf("%s", filepath);
+
+  // Load the specific dataset
+
+  // Change the active dataset
+  strcpy(App.activeDataset, filepath);
+  
+  // Go to menu
+  App.appState = APPSTATE_MENU;
+}
+
+void App_friends() {
+  App.appState = APPSTATE_MENU;
+}
+
+void App_connections() {
+  App.appState = APPSTATE_MENU;
 }
 
 /**
@@ -85,22 +152,34 @@ void App_main() {
 
   do {
 
+    // Print the header each time
+    App_header();
+
     // Execute the correct oage
     switch(App.appState) {
       
       // Init the app
-      case APP_INIT: App_init(); break;
+      case APPSTATE_INIT: App_init(); break;
+
+      // Load another dataset
+      case APPSTATE_LOAD: App_load(); break;
+
+      // Load another dataset
+      case APPSTATE_FRIENDS: App_friends(); break;
+
+      // Load another dataset
+      case APPSTATE_CONNECTIONS: App_connections(); break;
 
       // Run the main menu of the app
-      case APP_MENU: App_menu(); break;
+      case APPSTATE_MENU: App_menu(); break;
 
       // Exit the app
-      case APP_EXIT:
+      case APPSTATE_EXIT:
       default: break;
     }
 
   // While the app isn't done running
-  } while(App.appState != APP_EXIT);
+  } while(App.appState != APPSTATE_EXIT);
 }
 
 #endif
