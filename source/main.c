@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-16 17:36:51
- * @ Modified time: 2024-07-19 12:30:16
+ * @ Modified time: 2024-07-19 12:49:20
  * @ Description:
  * 
  * The main file of the project.
@@ -32,6 +32,7 @@ int main() {
   // printf("%s: %s", s, (char *) HashMap_get(test, s));
   // printf("success");
 
+  Model_init();
   Model_readData("./data/Caltech36.txt");
 
   return 0;
