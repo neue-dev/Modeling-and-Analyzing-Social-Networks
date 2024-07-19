@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 18:40:56
- * @ Modified time: 2024-07-19 19:51:42
+ * @ Modified time: 2024-07-19 20:14:31
  * @ Description:
  * 
  * The main flow of the application.
@@ -15,7 +15,9 @@
 
 #define APP_DEFAULT_DATASET "./data/Caltech36.txt"
 #define APP_INDENT_INFO "[*]"
-#define APP_INDENT_SUCCESS " / "
+#define APP_INDENT_EMPTY "[ ]"
+#define APP_INDENT_SUBINFO " | "
+#define APP_INDENT_SUCCESS " ! "
 #define APP_INDENT_FAILURE " X "
 
 typedef enum AppState AppState;
@@ -53,7 +55,8 @@ void App_init() {
 
   // Say that we're done initting
   UI_indent(APP_INDENT_SUCCESS); UI_s("Loaded default dataset: "); UI_s(APP_DEFAULT_DATASET); UI__();
-  UI_indent(APP_INDENT_SUCCESS); UI_s("App initialized."); UI__(); UI__();
+  UI_indent(APP_INDENT_SUCCESS); UI_s("App initialized."); UI__(); 
+  UI__();
 
   // Run the menu after the init
   App.appState = APP_MENU;
@@ -64,6 +67,12 @@ void App_init() {
 */
 void App_menu() {
   
+  // Print the options
+  UI_indent(APP_INDENT_INFO); UI_s("Select what to do next."); UI__();
+  UI_indent(APP_INDENT_SUBINFO); UI_indent("-0-"); UI_s("Load another dataset."); UI__();
+  UI_indent(APP_INDENT_SUBINFO); UI_indent("-1-"); UI_s("Display friend list."); UI__();
+  UI_indent(APP_INDENT_SUBINFO); UI_indent("-2-"); UI_s("Display connections."); UI__();
+  UI__();
   
   App.appState = APP_EXIT;
 }
