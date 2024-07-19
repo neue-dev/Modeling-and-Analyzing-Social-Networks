@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 12:04:06
- * @ Modified time: 2024-07-19 12:24:15
+ * @ Modified time: 2024-07-19 12:29:39
  * @ Description:
  * 
  * A record represents a single entry within our model.
@@ -55,6 +55,15 @@ Record *Record_init(Record *this, char *id, char *name) {
 */
 Record *Record_new(char *id, char *name) {
   return Record_init(Record_alloc(), id, name);
+}
+
+/**
+ * Frees the given record from memory.
+ * 
+ * @param   { Record * }  this  The record to free from memory.
+*/
+void Record_kill(Record *this) {
+  free(this);
 }
 
 #endif RECORD_C

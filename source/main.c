@@ -1,14 +1,13 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-16 17:36:51
- * @ Modified time: 2024-07-19 11:59:29
+ * @ Modified time: 2024-07-19 12:30:16
  * @ Description:
  * 
  * The main file of the project.
  */
 
 #include "./model/model.c"
-#include "./model/hashmap.c"
 
 #include <stdio.h>
 #include <string.h>
@@ -33,7 +32,7 @@ int main() {
   // printf("%s: %s", s, (char *) HashMap_get(test, s));
   // printf("success");
 
-  Model_readData("./data/Harvard1.txt");
+  Model_readData("./data/Caltech36.txt");
 
   return 0;
 }

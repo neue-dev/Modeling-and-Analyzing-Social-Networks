@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-19 11:59:54
+ * @ Modified time: 2024-07-19 12:32:34
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -12,8 +12,36 @@
 #define MODEL_C
 
 #include "../io/file.c"
+#include "./hashmap.c"
+#include "./record.c"
+#include "./node.c"
 
 typedef struct Model Model;
+
+struct Model {
+
+  // Stores the nodes within the model
+  HashMap *nodes;
+
+} MODEL;
+
+/**
+ * Initializes the model we're going to use.
+ * 
+ * @param   { Model * }   this  The model to init.
+*/
+void Model_init(Model *this) {
+  
+  // Create a new hashmap
+  this->nodes = HashMap_new();
+}
+
+/**
+ * Adds a node to the model.
+*/
+void Model_addNode() {
+
+}
 
 /**
  * Reads the file and converts its data into our model.
@@ -33,7 +61,7 @@ void Model_readData(char *filepath) {
 
   // Read the file contents
   while(File_read(&file, "%s %s", &sourceId, &targetId)) {
-    // printf("source: %s, target: %s\n", sourceId, targetId);
+    // Record_new(sourceId, sourceId);
   }
 
   // Close the file

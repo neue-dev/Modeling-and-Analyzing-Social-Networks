@@ -1,3 +1,5 @@
+.VSCodeCounter/
+
 **/*.class
 **/*.exe
 **/*.o
