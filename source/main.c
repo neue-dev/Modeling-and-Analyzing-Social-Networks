@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-16 17:36:51
- * @ Modified time: 2024-07-19 12:49:20
+ * @ Modified time: 2024-07-19 13:38:53
  * @ Description:
  * 
  * The main file of the project.
@@ -33,7 +33,7 @@ int main() {
   // printf("success");
 
   Model_init();
-  Model_readData("./data/Caltech36.txt");
+  Model_readData("./data/Trinity100.txt");
 
   return 0;
 }

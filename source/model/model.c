@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-19 12:55:39
+ * @ Modified time: 2024-07-19 13:41:12
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -49,16 +49,16 @@ void Model_init() {
 Node *Model_addNode(char *id) {
   
   // Create a record for the source node
-  Record *pSourceRecord = Record_new(id, id);
+  Record *pRecord = Record_new(id, id);
 
   // Create a new node
-  Node *pSourceNode = Node_new(id, pSourceRecord);
+  Node *pNode = Node_new(id, pRecord);
 
   // Save the node in the hashmap
-  HashMap_put(MODEL->nodes, id, pSourceNode);
+  HashMap_put(MODEL->nodes, id, pNode);
 
   // Return the node
-  return pSourceNode;
+  return pNode;
 }
 
 /**
@@ -103,12 +103,14 @@ void Model_readData(char *filepath) {
   char sourceId[32];
   char targetId[32];
 
+  // Skip the first line
+  // The first line only contains metadata
+  File_read(&file, "%s %s", &sourceId, &targetId);
+
   // Read the file contents
   // Also generates the model in memory
-  while(File_read(&file, "%s %s", &sourceId, &targetId)) {
-    
-    
-  }
+  while(File_read(&file, "%s %s", &sourceId, &targetId))
+    Model_addAdj(sourceId, targetId);
 
   // Close the file
   File_close(&file);

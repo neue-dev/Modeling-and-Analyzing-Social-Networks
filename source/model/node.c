@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-17 10:27:36
- * @ Modified time: 2024-07-19 12:36:55
+ * @ Modified time: 2024-07-19 13:40:44
  * @ Description:
  * 
  * The node class.
@@ -11,6 +11,8 @@
 #define NODE_C
 
 #include "./hashmap.c"
+
+#define NODE_ID_LENGTH (1 << 6)
 
 typedef struct Node Node;
 
@@ -28,7 +30,7 @@ struct Node {
   HashMap *adjNodes;
 
   // The id and data of the node
-  char *id;
+  char id[NODE_ID_LENGTH + 1];
   void *pData;
 };
 
@@ -37,7 +39,7 @@ struct Node {
  * 
  * @return  { Node * }  The memory for the new node.
  */
-Node *Node_alloc() {
+Node *_Node_alloc() {
   Node *pNode = calloc(1, sizeof(*pNode));
   
   return pNode; 
@@ -51,10 +53,10 @@ Node *Node_alloc() {
  * @param   { void * }  pData   The data stored by the node.
  * @return  { Node * }          The initialized node.
  */
-Node *Node_init(Node *this, char *id, void *pData) {
+Node *_Node_init(Node *this, char *id, void *pData) {
 
   // Save the id and data
-  this->id = id;
+  strncpy(this->id, id, NODE_ID_LENGTH);
   this->pData = pData;
 
   // Init the hashmaps
@@ -72,7 +74,7 @@ Node *Node_init(Node *this, char *id, void *pData) {
  * @param   { void * }  pData   The data stored by the node.
  */
 Node *Node_new(char *id, void *pData) {
-  return Node_init(Node_alloc(), id, pData);
+  return _Node_init(_Node_alloc(), id, pData);
 }
 
 /**
@@ -122,11 +124,12 @@ void Node_addPrev(Node *this, Node *pPrev) {
  * This method is used exclusively when addNext() and addPrev() are not.
  * In other words, we either use addNext() and addPrev() OR addAdj() based on whether we're constructing a un/directed graph.
  * 
- * @param   { Node * }  this  The node to modify.
- * @param   { Node * }  pAdj  A pointer to the adjacent node.
+ * @param   { Node * }  this  The first node in the adjacency.
+ * @param   { Node * }  pAdj  The second node in the adjacency.
 */
 void Node_addAdj(Node *this, Node *pAdj) {
   HashMap_put(this->adjNodes, pAdj->id, pAdj);
+  HashMap_put(pAdj->adjNodes, this->id, this);
 }
 
 #endif

@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-16 17:41:28
- * @ Modified time: 2024-07-19 10:07:06
+ * @ Modified time: 2024-07-19 13:28:48
  * @ Description:
  * 
  * Defines a hashmap class.
@@ -302,7 +302,7 @@ HashMap *_HashMap_alloc() {
  */
 HashMap *_HashMap_init(HashMap *this) {
 
-  uint32_t initialLimit = (1 << 4) - 1;
+  uint32_t initialLimit = (1 << 8) - 1;
 
   // We start with 16 slots
   this->limit = initialLimit;
