@@ -1,26 +1,37 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:14:59
- * @ Modified time: 2024-07-19 10:37:14
+ * @ Modified time: 2024-07-19 10:49:29
  * @ Description:
  */
 
 #ifndef FILE_C
 #define FILE_C
 
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
 
 typedef struct File File;
 
 struct File {
 
   // The path to the file itself
-  char path[256];
+  char filepath[256];
 
   // The pointer to the file
   FILE *pFile; 
 };
+
+/**
+ * Initiailizes the file with the given values.
+ * 
+ * @param   { File * }  this      The file object to init.
+ * @param   { char * }  filepath  The path to the file to link.
+*/
+void File_init(File *this, char *filepath) {
+  strcpy(this->filepath, filepath);
+}
 
 /**
  * Opens the file with the given mode.
@@ -32,7 +43,7 @@ struct File {
 int File_open(File *this, char *mode) {
 
   // Open the file first
-  this->pFile = fopen(this->path, mode);
+  this->pFile = fopen(this->filepath, mode);
 
   // Failure to open file
   if(this->pFile == NULL)
@@ -54,11 +65,11 @@ int File_read(File *this, char *format, ...) {
 
   // Pointer to the argument list
   va_list va_ptr;
-  vs_start(va_ptr, format);
+  va_start(va_ptr, format);
 
   // If the file pointer is NULL
   if(this->pFile == NULL)
-    return;
+    return 0;
 
   // Call fscanf with our args
   return vfscanf(this->pFile, format, va_ptr);
