@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 12:04:06
- * @ Modified time: 2024-07-19 12:29:39
+ * @ Modified time: 2024-07-19 12:37:14
  * @ Description:
  * 
  * A record represents a single entry within our model.
@@ -66,5 +66,5 @@ void Record_kill(Record *this) {
   free(this);
 }
 
-#endif RECORD_C
+#endif
 

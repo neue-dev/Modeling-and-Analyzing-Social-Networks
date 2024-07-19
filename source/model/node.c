@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-17 10:27:36
- * @ Modified time: 2024-07-17 10:45:51
+ * @ Modified time: 2024-07-19 12:36:55
  * @ Description:
  * 
  * The node class.
@@ -95,6 +95,38 @@ void Node_kill(Node *this, int bShouldFreeData) {
 
   // Free the instance
   free(this);
+}
+
+/**
+ * Adds a next node to the given node.
+ * 
+ * @param   { Node * }  this    The node to modify.
+ * @param   { Node * }  pNext   A pointer to the next node.
+*/
+void Node_addNext(Node *this, Node *pNext) {
+  HashMap_put(this->nextNodes, pNext->id, pNext);
+}
+
+/**
+ * Adds a prev node to the given node.
+ * 
+ * @param   { Node * }  this    The node to modify.
+ * @param   { Node * }  pPrev   A pointer to the prev node.
+*/
+void Node_addPrev(Node *this, Node *pPrev) {
+  HashMap_put(this->prevNodes, pPrev->id, pPrev);
+}
+
+/**
+ * Adds an adjacent node to the given node.
+ * This method is used exclusively when addNext() and addPrev() are not.
+ * In other words, we either use addNext() and addPrev() OR addAdj() based on whether we're constructing a un/directed graph.
+ * 
+ * @param   { Node * }  this  The node to modify.
+ * @param   { Node * }  pAdj  A pointer to the adjacent node.
+*/
+void Node_addAdj(Node *this, Node *pAdj) {
+  HashMap_put(this->adjNodes, pAdj->id, pAdj);
 }
 
 #endif
