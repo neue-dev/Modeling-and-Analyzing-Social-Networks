@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 18:40:56
- * @ Modified time: 2024-07-20 12:47:16
+ * @ Modified time: 2024-07-20 15:59:22
  * @ Description:
  * 
  * The main flow of the application.
@@ -112,7 +112,7 @@ void App_load() {
   // The user input
   char filepath[256];
 
-  // print the prompt
+  // Print the prompt
   UI_indent(APP_INDENT_INFO); UI_s("Specify a dataset to load."); UI__(); 
   UI_input(APP_INDENT_PROMPT, filepath);
 
@@ -130,11 +130,9 @@ void App_load() {
     UI__();
     UI_indent(APP_INDENT_FAILURE); UI_s("Could not find the specified dataset."); UI__();
     UI_indent(APP_INDENT_SUBINFO); UI_s("Input another dataset? (y/n)"); UI__();
-    UI__();
-    UI_indent(APP_INDENT_PROMPT);
 
     // Stay in the page
-    if(UI_response())
+    if(UI_response(APP_INDENT_PROMPT))
       return;
   }
   
@@ -146,6 +144,27 @@ void App_load() {
  * Runs the model and displays the friends of a given node.
 */
 void App_friends() {
+
+  // The user input
+  char id[256];
+
+  // Print the prompt
+  UI_indent(APP_INDENT_INFO); UI_s("You are now viewing the friend count for a given node."); UI__();
+  UI_indent(APP_INDENT_INFO); UI_s("Specify a node to inspect."); UI__(); 
+  UI_input(APP_INDENT_PROMPT, id);
+
+  // Print the adj list with 5 cols
+  Model_printAdjList(id, 5);
+
+  // Type any key to continue
+  UI__();
+  UI_indent(APP_INDENT_INFO); UI_s("Inspect another node?"); UI__();
+  
+  // Stay on page if yes
+  if(UI_response(APP_INDENT_PROMPT))
+    return;
+
+  // Go to menu
   App.appState = APPSTATE_MENU;
 }
 
