@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-20 16:00:48
+ * @ Modified time: 2024-07-20 16:15:31
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -102,10 +102,16 @@ void Model_addAdj(char *sourceId, char *targetId) {
  * @param   { char * }  id    The id of the node to inspect.
  * @param   { int }     cols  The number of cols for formatting data.
 */
-void Model_printAdjList(char *id, int cols) {
+void Model_printFriendList(char *id, int cols) {
 
   // Grab the node we want
   Node *pNode = HashMap_get(Model.nodes, id);
+
+  // The id was invalid
+  if(pNode == NULL) {
+    printf("\tInvalid id.\n");
+    return;
+  }
 
   // Grab the details of the adjacency
   char **pNodeAdjs = HashMap_getKeys(pNode->adjNodes);

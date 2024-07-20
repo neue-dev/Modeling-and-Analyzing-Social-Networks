@@ -154,7 +154,7 @@ void App_friends() {
   UI_input(APP_INDENT_PROMPT, id);
 
   // Print the adj list with 5 cols
-  Model_printAdjList(id, 5);
+  Model_printFriendList(id, 5);
 
   // Type any key to continue
   UI__();
