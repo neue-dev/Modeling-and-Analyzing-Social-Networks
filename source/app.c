@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 18:40:56
- * @ Modified time: 2024-07-20 12:20:38
+ * @ Modified time: 2024-07-20 12:44:38
  * @ Description:
  * 
  * The main flow of the application.
@@ -109,15 +109,11 @@ void App_menu() {
 */
 void App_load() {
 
+  char filepath[256];
+
   // print the prompt
   UI_indent(APP_INDENT_INFO); UI_s("Specify a dataset to load."); UI__(); 
-  UI__();
-  UI_indent(APP_INDENT_PROMPT);
-
-  // Wait for user input
-  char filepath[256];
-  scanf("%s", filepath);
-  UI__();
+  UI_input(APP_INDENT_PROMPT, filepath);
 
   // Clear the model first
   UI_indent(APP_INDENT_SUBINFO); UI_s("Clearing previous model data...."); UI__();
@@ -135,14 +131,9 @@ void App_load() {
     UI_indent(APP_INDENT_SUBINFO); UI_s("Input another dataset? (y/n)"); UI__();
     UI__();
     UI_indent(APP_INDENT_PROMPT);
-    
-    // Grab response
-    char response;
-    scanf(" %c", &response);
-    UI__();
 
     // Stay in the page
-    if(response == 'y' || response == 'Y')
+    if(UI_response())
       return;
   }
   

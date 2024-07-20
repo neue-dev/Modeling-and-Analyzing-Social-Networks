@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 13:45:05
- * @ Modified time: 2024-07-19 19:50:30
+ * @ Modified time: 2024-07-20 12:43:08
  * @ Description:
  * 
  * This has a bunch of utilities for displaying stuff on the screen.
@@ -102,6 +102,43 @@ void UI_n(int number) {
 */
 void UI_f(float number) {
   printf("%f", number);  
+}
+
+/**
+ * Stores the text output of an input prompt in the provided out variable. 
+ * 
+ * @param   { char * }  indent  The indent for the input prompt.
+ * @param   { char * }  out     The output variable.
+*/
+void UI_input(char *indent, char *out) {
+
+  // Print the cursor prompt
+  UI__();
+  UI_indent(indent);
+
+  // Wait for user input
+  char input[256];
+  scanf("%s", input);
+  UI__();
+
+  // Return the output
+  strcpy(out, input);
+}
+
+/**
+ * Grabs a yes or no response from the user.
+ * Does not print a prompt for it.
+ * 
+ * @return  { int }   Whether or not the user agreed / disagreed.
+*/
+int UI_response() {
+  
+  // Grab the response
+  char response;
+  scanf(" %c", &response);
+  
+  // Whether or not the response was a y
+  return response == 'Y' || response == 'y';
 }
 
 #endif
