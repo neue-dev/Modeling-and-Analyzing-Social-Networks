@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 18:40:56
- * @ Modified time: 2024-07-19 21:07:32
+ * @ Modified time: 2024-07-20 12:20:38
  * @ Description:
  * 
  * The main flow of the application.
@@ -19,8 +19,8 @@
 #define APP_INDENT_EMPTY "   "
 #define APP_INDENT_PROMPT "[> "
 #define APP_INDENT_SUBINFO "[| "
-#define APP_INDENT_SUCCESS " ! "
-#define APP_INDENT_FAILURE " X "
+#define APP_INDENT_SUCCESS "[! "
+#define APP_INDENT_FAILURE "[X "
 
 typedef enum AppState AppState;
 
@@ -39,9 +39,6 @@ struct App {
   // In other words, what page we're on
   AppState appState;
 
-  // The path to the active dataset
-  char activeDataset[256];
-
 } App;
 
 /**
@@ -53,6 +50,8 @@ void App_header() {
   UI_clear(); UI__();
   UI_indent(""); UI_s("Modeling and Analyzing Networks"); UI__(); 
   UI_indent(""); UI_s("\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\""); UI__();
+  UI_indent(""); UI_s("[] Loaded: "); UI_s(Model.activeDataset); UI__();
+  UI_indent(""); UI_s("_______________________________"); UI__();
   UI__();
 }
 
@@ -72,9 +71,6 @@ void App_init() {
 
   // Read the data we want
   Model_loadData(APP_DEFAULT_DATASET);
-
-  // Set the active dataset
-  strcpy(App.activeDataset, APP_DEFAULT_DATASET);
 
   // Run the menu after the init
   App.appState = APPSTATE_MENU;
@@ -123,18 +119,32 @@ void App_load() {
   scanf("%s", filepath);
   UI__();
 
-  // ! check if filepath valid first
-
   // Clear the model first
   UI_indent(APP_INDENT_SUBINFO); UI_s("Clearing previous model data...."); UI__();
   Model_clearData();
 
   // Load the selected dataset
   UI_indent(APP_INDENT_SUBINFO); UI_s("Loading specified dataset...."); UI__();
-  Model_loadData(filepath);
+  
+  // If the model doesn't exist or couldn't be found, stay on this page
+  if(!Model_loadData(filepath)) {
 
-  // Change the active dataset
-  strcpy(App.activeDataset, filepath);
+    // Print the prompt
+    UI__();
+    UI_indent(APP_INDENT_FAILURE); UI_s("Could not find the specified dataset."); UI__();
+    UI_indent(APP_INDENT_SUBINFO); UI_s("Input another dataset? (y/n)"); UI__();
+    UI__();
+    UI_indent(APP_INDENT_PROMPT);
+    
+    // Grab response
+    char response;
+    scanf(" %c", &response);
+    UI__();
+
+    // Stay in the page
+    if(response == 'y' || response == 'Y')
+      return;
+  }
   
   // Go to menu
   App.appState = APPSTATE_MENU;

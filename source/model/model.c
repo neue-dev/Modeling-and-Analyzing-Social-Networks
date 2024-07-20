@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-19 21:02:46
+ * @ Modified time: 2024-07-20 12:19:33
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -16,7 +16,11 @@
 #include "./record.c"
 #include "./node.c"
 
+#define MODEL_EMPTY "no model"
 struct Model {
+
+  // The path to the active dataset
+  char activeDataset[256];
 
   // Stores the nodes within the model
   HashMap *nodes;
@@ -97,6 +101,10 @@ void Model_addAdj(char *sourceId, char *targetId) {
  * Makes sure to perform proper garbage collection.
 */
 void Model_clearData() {
+
+  // If it's already cleared or smth
+  if(!strcmp(Model.activeDataset, MODEL_EMPTY))
+    return;
   
   // Kill the hashmap first
   // We don't delete the data inside because we clean that up ourselves
@@ -113,19 +121,26 @@ void Model_clearData() {
   // Reset node count (although that's a bit redudant)
   Model.nodes = HashMap_new();
   Model.nodeCount = 0;
+
+  // Empty the activeDataset string
+  strcpy(Model.activeDataset, MODEL_EMPTY);
 }
 
 /**
  * Reads the file and converts its data into our model.
  * 
  * @param   { char * }  filepath  The path to the file to read.
+ * @return  { int }               Whether or not the data was loaded.
 */
-void Model_loadData(char *filepath) {
+int Model_loadData(char *filepath) {
   
   // Create a file to the dataset
   File file;
   File_init(&file, filepath);
-  File_open(&file, "r");
+  
+  // Try to open the file
+  if(!File_open(&file, "r"))
+    return 0;
 
   // Temporary variables for holding read data
   char sourceId[32];
@@ -146,8 +161,14 @@ void Model_loadData(char *filepath) {
   while(File_read(&file, "%s %s", &sourceId, &targetId))
     Model_addAdj(sourceId, targetId);
 
+  // Set the active dataset
+  strcpy(Model.activeDataset, filepath);
+
   // Close the file
   File_close(&file);
+
+  // Success
+  return 1;
 }
 
 // void Model_
