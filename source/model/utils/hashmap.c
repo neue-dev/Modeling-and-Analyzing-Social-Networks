@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-16 17:41:28
- * @ Modified time: 2024-07-20 15:24:17
+ * @ Modified time: 2024-07-20 15:59:10
  * @ Description:
  * 
  * Defines a hashmap class.
@@ -204,7 +204,7 @@ static inline void _HashMap_resizeKeys(HashMap *this) {
   this->keys = calloc(this->arraySize, sizeof(char *));
 
   // Copy the old keys to the current memory block
-  memcpy(this->keys, oldKeys, this->count);
+  memcpy(this->keys, oldKeys, this->count * sizeof(char *));
 
   // Free the old keys
   free(oldKeys);
@@ -352,6 +352,8 @@ int _HashMap_put(HashMap *this, Entry *pEntry) {
   
   // Grab the key of the entry
   char *key = pEntry->key;
+
+  // Hash the key and determine the slot
   uint32_t hash = _HashMap_hash(key, strlen(key), HASHMAP_HASH_SEED);
   uint32_t slot = hash % this->limit;
 
@@ -366,7 +368,6 @@ int _HashMap_put(HashMap *this, Entry *pEntry) {
     this->slots++;
 
     // Return
-    _HashMap_attemptResizeEntries(this);
     return 1;
   }
 
@@ -389,7 +390,6 @@ int _HashMap_put(HashMap *this, Entry *pEntry) {
   Entry_chain(pSlot, pEntry);
 
   // Success
-  _HashMap_attemptResizeEntries(this);
   return 1;
 }
 
@@ -511,6 +511,26 @@ void *HashMap_get(HashMap *this, char *key) {
 
   // Return the associated data
   return pSlot->pData;
+}
+
+/**
+ * Returns the array of keys associated with the hashmap.
+ * 
+ * @param   { HashMap * }   this  The hashmap to check.
+ * @return  { char ** }           The array of keys of the hashmap.
+*/
+char **HashMap_getKeys(HashMap *this) {
+  return this->keys;
+}
+
+/**
+ * Retrieve the count of the entries in the hashmap.
+ * 
+ * @param   { HashMap * }   this  The hashmap size.
+ * @return  { uint32_t }          The number of elements in the hashmap.
+*/
+uint32_t HashMap_getCount(HashMap *this) {
+  return this->count;
 }
 
 #endif
