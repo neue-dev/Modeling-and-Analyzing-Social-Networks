@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 18:40:56
- * @ Modified time: 2024-07-20 12:44:38
+ * @ Modified time: 2024-07-20 12:47:16
  * @ Description:
  * 
  * The main flow of the application.
@@ -109,6 +109,7 @@ void App_menu() {
 */
 void App_load() {
 
+  // The user input
   char filepath[256];
 
   // print the prompt

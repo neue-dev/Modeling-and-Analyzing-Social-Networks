@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-16 17:41:28
- * @ Modified time: 2024-07-19 13:51:57
+ * @ Modified time: 2024-07-20 15:24:17
  * @ Description:
  * 
  * Defines a hashmap class.
@@ -29,6 +29,7 @@ struct HashMap {
 
   // The contents of the hashmap
   Entry **entries;
+  char **keys;
 
   // The number of entries in the hashmap
   uint32_t count;
@@ -41,6 +42,7 @@ struct HashMap {
   // The maximum number of entries held by the hashmap
   // This changes when the hashmap resizes
   uint32_t limit;
+  uint32_t arraySize;
 
 };
 
@@ -52,7 +54,7 @@ HashMap *HashMap_init(HashMap *this);
 HashMap *HashMap_new();
 void HashMap_kill(HashMap *this, int bShouldFreeData);
 
-void _HashMap_attemptResize(HashMap *this);
+void _HashMap_attemptResizeEntries(HashMap *this);
 int _HashMap_put(HashMap *this, Entry *pEntry);
 int HashMap_put(HashMap *this, char *key, void *pData);
 void *HashMap_get(HashMap *this, char *key);
@@ -131,7 +133,7 @@ static inline uint32_t _HashMap_hash(char *key, uint32_t length, uint32_t seed) 
  * 
  * @param   { HashMap * }   this  The hashmap to resize.
  */
-static inline void _HashMap_resize(HashMap *this) {
+static inline void _HashMap_resizeEntries(HashMap *this) {
 
   // Get a reference to the old entries
   Entry **pOldEntries = this->entries;
@@ -186,6 +188,29 @@ static inline void _HashMap_resize(HashMap *this) {
 }
 
 /**
+ * Resizes the hashmap key array.
+ * 
+ * @param   { HashMap * }   this  The hashmap to modify.
+*/
+static inline void _HashMap_resizeKeys(HashMap *this) {
+  
+  // Grab a copy of the old keys
+  char **oldKeys = this->keys;
+
+  // Double the array size
+  this->arraySize <<= 1;
+
+  // Reallocate the current memory 
+  this->keys = calloc(this->arraySize, sizeof(char *));
+
+  // Copy the old keys to the current memory block
+  memcpy(this->keys, oldKeys, this->count);
+
+  // Free the old keys
+  free(oldKeys);
+}
+
+/**
  * Allocates space for a new hashmap.
  * 
  * @return  { HashMap * }   The pointer to the allocated space.
@@ -208,11 +233,13 @@ HashMap *_HashMap_init(HashMap *this) {
 
   // We start with 16 slots
   this->limit = initialLimit;
+  this->arraySize = initialLimit;
   this->slots = 0;
   this->count = 0;
 
   // Init the entrie pointer array
   this->entries = calloc(initialLimit, sizeof(Entry *));
+  this->keys = calloc(initialLimit, sizeof(char *));
   
   return this;
 }
@@ -254,6 +281,17 @@ void HashMap_kill(HashMap *this, int bShouldFreeData) {
     }
   }
 
+  // Free all the associated keys
+  for(uint32_t i = 0; i < this->count; i++) {
+    
+    // Free the key
+    free(this->keys[i]);
+  }
+
+  // Free the key array
+  free(this->entries);
+  free(this->keys);
+
   // Free the main memory
   free(this);
 }
@@ -264,7 +302,7 @@ void HashMap_kill(HashMap *this, int bShouldFreeData) {
  * 
  * @param   { HashMap * }   this  The hashmap to resize.
  */
-void _HashMap_attemptResize(HashMap *this) {
+void _HashMap_attemptResizeEntries(HashMap *this) {
   
   // Compute the load factor
   // It's just the average length of our linked lists
@@ -279,7 +317,24 @@ void _HashMap_attemptResize(HashMap *this) {
   // That will eventually trigger the loadFactor to go above the max load allowed
   // Also, we only resize if the hashmap is at least half full
   if(loadFactor > HASHMAP_MAX_LOAD && this->slots >= this->limit * 0.5)
-    _HashMap_resize(this);
+    _HashMap_resizeEntries(this);
+}
+
+/**
+ * Attempts to resize the keys array.
+ * If the array is still okay, then it is not resized.
+ * 
+ * @param   { Hashmap * }   this  The hashmap to resize.
+*/
+void _HashMap_attemptResizeKeys(HashMap *this) {
+  
+  // We can't resize indefinitely
+  if(this->arraySize > HASHMAP_MAX_SIZE)
+    return;
+
+  // Resize if the count gets too much 
+  if(this->count >= this->arraySize - 2)
+    _HashMap_resizeKeys(this);
 }
 
 /**
@@ -311,7 +366,7 @@ int _HashMap_put(HashMap *this, Entry *pEntry) {
     this->slots++;
 
     // Return
-    _HashMap_attemptResize(this);
+    _HashMap_attemptResizeEntries(this);
     return 1;
   }
 
@@ -334,8 +389,23 @@ int _HashMap_put(HashMap *this, Entry *pEntry) {
   Entry_chain(pSlot, pEntry);
 
   // Success
-  _HashMap_attemptResize(this);
+  _HashMap_attemptResizeEntries(this);
   return 1;
+}
+
+/**
+ * Inserts a key into the hashmap key array.
+ * 
+ * @param   { HashMap * }   this  The hashmap to modify.
+ * @param   { char * }      key   The key to insert.
+*/
+void _HashMap_putKey(HashMap *this, char *key) {
+
+  // Allocate space for the key
+  this->keys[this->count] = calloc(ENTRY_KEY_LENGTH, sizeof(char));
+  
+  // Copy the key onto the space
+  strcpy(this->keys[this->count], key);  
 }
 
 /**
@@ -362,12 +432,14 @@ int HashMap_put(HashMap *this, char *key, void *pData) {
   if(pSlot == NULL) {
     
     // Insert the entry into the slot
+    _HashMap_putKey(this, key);
     this->entries[slot] = pEntry;
     this->slots++;
     this->count++;
 
     // Return
-    _HashMap_attemptResize(this);
+    _HashMap_attemptResizeEntries(this);
+    _HashMap_attemptResizeKeys(this);
     return 1;
   }
 
@@ -391,14 +463,18 @@ int HashMap_put(HashMap *this, char *key, void *pData) {
     // Grab the next entry in the linked list
     pSlot = pSlot->pNext;
   }
-  
+
   // Finally, chain the current entry to the last one
-  // Increment the count too
+  // Copy the key too
   Entry_chain(pSlot, pEntry);
+  _HashMap_putKey(this, key);
+  
+  // Increment the count too
   this->count++;
 
   // Success
-  _HashMap_attemptResize(this);
+  _HashMap_attemptResizeEntries(this);
+  _HashMap_attemptResizeKeys(this);
   return 1;
 }
 

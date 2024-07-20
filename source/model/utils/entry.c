@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 13:49:08
- * @ Modified time: 2024-07-19 13:52:15
+ * @ Modified time: 2024-07-20 14:51:19
  * @ Description:
  * 
  * An entry we use for both hashmaps and queues.
