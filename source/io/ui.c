@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 13:45:05
- * @ Modified time: 2024-07-20 12:43:08
+ * @ Modified time: 2024-07-20 15:56:58
  * @ Description:
  * 
  * This has a bunch of utilities for displaying stuff on the screen.
@@ -129,9 +129,14 @@ void UI_input(char *indent, char *out) {
  * Grabs a yes or no response from the user.
  * Does not print a prompt for it.
  * 
- * @return  { int }   Whether or not the user agreed / disagreed.
+ * @param   { char * }  indent  The indent to use.
+ * @return  { int }             Whether or not the user agreed / disagreed.
 */
-int UI_response() {
+int UI_response(char *indent) {
+
+  // Print the prompt indent
+  UI__();
+  UI_indent(indent);
   
   // Grab the response
   char response;
