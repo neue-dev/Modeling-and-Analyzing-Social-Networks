@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-21 23:44:18
+ * @ Modified time: 2024-07-21 23:46:40
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -159,6 +159,10 @@ void Model_printConnection(char *sourceId, char *targetId, int cols) {
   // We proceed to traverse the dataset if both nodes were fine
   Queue *nodeQueue = Queue_new();
 
+  // Push the source node unto the queue
+  // Queue_push();
+
+  // While the queue isn't empty
   do {
     
     
