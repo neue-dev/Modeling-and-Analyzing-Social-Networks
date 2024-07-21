@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 13:47:39
- * @ Modified time: 2024-07-19 14:03:29
+ * @ Modified time: 2024-07-21 15:54:08
  * @ Description:
  * 
  * A queue data structure which comes in handy for traversing our data.
@@ -88,6 +88,40 @@ void Queue_kill(Queue *this, int bShouldFreeData) {
 
   // Free the queue object itself
   free(this);
+}
+
+/**
+ * Returns the data at the head of the queue BUT does not remove it.
+ * 
+ * @param   { Queue * }   this  The queue.
+ * @return  { void * }          The data at the head of the queue.
+*/
+void *Queue_peek(Queue *this) {
+  
+  // ! todo
+}
+
+/**
+ * Pushes a new entry onto the queue.
+ * 
+ * @param   { Queue * }   this    The queue to modify.
+ * @param   { void * }    pData   The data to insert into the queue.
+*/
+void Queue_push(Queue *this, void *pData) {
+  
+  // ! todo
+}
+
+/**
+ * Removes the head of the queue.
+ * Returns the data associated with the head.
+ * 
+ * @param   { Queue * }   this    The queue to modify.
+ * @return  { void * }            The data at the head of the queue.
+*/
+void *Queue_pop(Queue *this) {
+  
+  // ! todo
 }
 
 #endif
