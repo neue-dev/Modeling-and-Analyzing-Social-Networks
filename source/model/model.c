@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-20 16:15:31
+ * @ Modified time: 2024-07-21 15:46:52
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -136,6 +136,27 @@ void Model_printFriendList(char *id, int cols) {
 }
 
 /**
+ * Displays whether or not there's a connection between the two nodes.
+ * Prints the appropriate message when none exists, or when one of the nodes are invalid.
+ * 
+ * @param   { char * }  sourceId  The id of the source node.
+ * @param   { char * }  targetId  The id of the target node.
+ * @param   { int }     cols      The number of cols for the formatting.
+*/
+void Model_printConnection(char *sourceId, char *targetId, int cols) {
+  
+  // Grab the nodes we want
+  Node *pSourceNode = HashMap_get(Model.nodes, sourceId);
+  Node *pTargetNode = HashMap_get(Model.nodes, targetId);
+
+  // If either id was invalid
+  if(pSourceNode == NULL || pTargetNode == NULL) {
+    printf("\tAt least one of the ids was invalid.\n");
+    return;
+  }
+}
+
+/**
  * Clears the contents of the model.
  * Makes sure to perform proper garbage collection.
 */
@@ -209,8 +230,6 @@ int Model_loadData(char *filepath) {
   // Success
   return 1;
 }
-
-// void Model_
 
 void Model_serializeData() {
   

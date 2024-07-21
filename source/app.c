@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 18:40:56
- * @ Modified time: 2024-07-20 15:59:22
+ * @ Modified time: 2024-07-21 15:48:42
  * @ Description:
  * 
  * The main flow of the application.
@@ -14,6 +14,7 @@
 #include "./model/model.c"
 
 #define APP_DEFAULT_DATASET "./data/Caltech36.txt"
+#define APP_DEFAULT_COLS 5
 
 #define APP_INDENT_INFO "[] "
 #define APP_INDENT_EMPTY "   "
@@ -153,8 +154,8 @@ void App_friends() {
   UI_indent(APP_INDENT_INFO); UI_s("Specify a node to inspect."); UI__(); 
   UI_input(APP_INDENT_PROMPT, id);
 
-  // Print the adj list with 5 cols
-  Model_printFriendList(id, 5);
+  // Print the adj list with APP_DEFAULT_COLS number of columns
+  Model_printFriendList(id, APP_DEFAULT_COLS);
 
   // Type any key to continue
   UI__();
@@ -172,6 +173,30 @@ void App_friends() {
  * Runs the model and looks for paths within the data.
 */
 void App_connections() {
+
+  // The source and target ids
+  char sourceId[256];
+  char targetId[256];
+
+  // Prompt for both ids
+  UI_indent(APP_INDENT_INFO); UI_s("You are now viewing connections between two nodes."); UI__();
+  UI_indent(APP_INDENT_INFO); UI_s("Specify a node 1."); UI__(); 
+  UI_input(APP_INDENT_PROMPT, sourceId);
+  UI_indent(APP_INDENT_INFO); UI_s("Specify a node 2."); UI__(); 
+  UI_input(APP_INDENT_PROMPT, targetId);
+
+  // Print the connections with the right number of cols
+  Model_printConnection(sourceId, targetId, APP_DEFAULT_COLS);
+
+  // Type any key to continue
+  UI__();
+  UI_indent(APP_INDENT_INFO); UI_s("View another connection?"); UI__();
+  
+  // Stay on page if yes
+  if(UI_response(APP_INDENT_PROMPT))
+    return;
+
+  // Go to menu
   App.appState = APPSTATE_MENU;
 }
 
