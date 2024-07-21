@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-21 15:46:52
+ * @ Modified time: 2024-07-21 23:44:18
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -13,6 +13,7 @@
 
 #include "../io/file.c"
 #include "./utils/hashmap.c"
+#include "./utils/queue.c"
 #include "./record.c"
 #include "./node.c"
 
@@ -154,6 +155,15 @@ void Model_printConnection(char *sourceId, char *targetId, int cols) {
     printf("\tAt least one of the ids was invalid.\n");
     return;
   }
+
+  // We proceed to traverse the dataset if both nodes were fine
+  Queue *nodeQueue = Queue_new();
+
+  do {
+    
+    
+
+  } while(Queue_getCount(nodeQueue));
 }
 
 /**

@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 13:47:39
- * @ Modified time: 2024-07-21 23:31:14
+ * @ Modified time: 2024-07-21 23:44:03
  * @ Description:
  * 
  * A queue data structure which comes in handy for traversing our data.
@@ -177,6 +177,16 @@ void *Queue_pop(Queue *this) {
 
   // Return the data
   return pHead->pData;
+}
+
+/**
+ * Returns the size of a given queue.
+ * 
+ * @param   { Queue * }   this  The queue to inspect.
+ * @return  { int }             The size of the queue.
+*/
+int Queue_getCount(Queue *this) {
+  return this->count;
 }
 
 #endif
