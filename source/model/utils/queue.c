@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 13:47:39
- * @ Modified time: 2024-07-21 15:54:08
+ * @ Modified time: 2024-07-21 23:31:14
  * @ Description:
  * 
  * A queue data structure which comes in handy for traversing our data.
@@ -98,7 +98,12 @@ void Queue_kill(Queue *this, int bShouldFreeData) {
 */
 void *Queue_peek(Queue *this) {
   
-  // ! todo
+  // There is no tail
+  if(this->pHead == NULL)
+    return NULL;
+
+  // Return the head data
+  return this->pHead->pData;
 }
 
 /**
@@ -109,7 +114,28 @@ void *Queue_peek(Queue *this) {
 */
 void Queue_push(Queue *this, void *pData) {
   
-  // ! todo
+  // Create the entry to push first
+  Entry *pEntry = Entry_new("", pData);
+
+  // Increment the count regardless
+  this->count++;
+
+  // If the tail is null
+  if(this->pTail == NULL) {
+    
+    // Set the head and tail to the entry
+    this->pHead = pEntry;
+    this->pTail = pEntry;
+
+    // Exit the function
+    return;
+  }
+
+  // If the tail wasn't null, we chain the new entry with the tail
+  Entry_chain(this->pTail, pEntry);
+
+  // We then set the tail to point to the new entry
+  this->pTail = pEntry;
 }
 
 /**
@@ -121,7 +147,36 @@ void Queue_push(Queue *this, void *pData) {
 */
 void *Queue_pop(Queue *this) {
   
-  // ! todo
+  // We check if the head is null first
+  if(this->pHead == NULL)
+    return NULL;
+
+  // Otherwise, decrement the size
+  this->count--;
+
+  // If it wasn't null, grab a reference to the head data first
+  Entry *pHead = this->pHead;
+  Entry *pNext = this->pHead->pNext;
+
+  // Kill the head already
+  Entry_kill(this->pHead, 0);
+
+  // If the tail and head are the same, then count is one
+  if(this->pHead == this->pTail) {
+
+    // Set both to null
+    this->pHead = NULL;
+    this->pTail = NULL;
+
+    // Return the head data
+    return pHead->pData;
+  }
+
+  // Set the head to the next of the data
+  this->pHead = pNext;
+
+  // Return the data
+  return pHead->pData;
 }
 
 #endif
