@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-17 10:27:36
- * @ Modified time: 2024-07-19 13:53:23
+ * @ Modified time: 2024-07-22 11:42:30
  * @ Description:
  * 
  * The node class.
@@ -22,9 +22,9 @@ typedef struct Node Node;
  */
 struct Node {
 
-  // We use these nodes for directional graphs
-  HashMap *prevNodes;
-  HashMap *nextNodes;
+  // We use these variables for pathfinding
+  Node *pPrevNode;
+  Node *pNextNode;
 
   // We use this instead when creating undirected graphs
   HashMap *adjNodes;
@@ -59,9 +59,11 @@ Node *_Node_init(Node *this, char *id, void *pData) {
   strncpy(this->id, id, NODE_ID_LENGTH);
   this->pData = pData;
 
+  // Set the pointer to null
+  this->pPrevNode = NULL;
+  this->pNextNode = NULL;
+
   // Init the hashmaps
-  this->nextNodes = HashMap_new();
-  this->prevNodes = HashMap_new();
   this->adjNodes = HashMap_new();
 
   return this;
@@ -85,10 +87,8 @@ Node *Node_new(char *id, void *pData) {
  */
 void Node_kill(Node *this, int bShouldFreeData) {
   
-  // Kill the hashmaps BUT don't kill the actual nodes in them 
+  // Kill the hashmap BUT don't kill the actual nodes in it 
   // That's why we pass a 0 to the method
-  HashMap_kill(this->nextNodes, 0);
-  HashMap_kill(this->prevNodes, 0);
   HashMap_kill(this->adjNodes, 0);
 
   // Free the data associated with the node
@@ -100,23 +100,23 @@ void Node_kill(Node *this, int bShouldFreeData) {
 }
 
 /**
- * Adds a next node to the given node.
+ * Sets the next node of the given node.
  * 
  * @param   { Node * }  this    The node to modify.
  * @param   { Node * }  pNext   A pointer to the next node.
 */
-void Node_addNext(Node *this, Node *pNext) {
-  HashMap_put(this->nextNodes, pNext->id, pNext);
+void Node_setNext(Node *this, Node *pNext) {
+  this->pNextNode = pNext;
 }
 
 /**
- * Adds a prev node to the given node.
+ * Sets the prev node of the given node.
  * 
  * @param   { Node * }  this    The node to modify.
  * @param   { Node * }  pPrev   A pointer to the prev node.
 */
-void Node_addPrev(Node *this, Node *pPrev) {
-  HashMap_put(this->prevNodes, pPrev->id, pPrev);
+void Node_setPrev(Node *this, Node *pPrev) {
+  this->pPrevNode = pPrev;
 }
 
 /**
