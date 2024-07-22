@@ -1,6 +1,7 @@
 ! disallow other actions when no active dataset is present
 ! fix hashmap resizing, bug happens when initial size is 1 << 4
 ! make sure inputting folder doesn't work ('./data' produces bug)
+! pathfinding algo ????
 
 NEEDED:
 0. READ DATA AND STORE IN MEMORY IN PROPER STRUCT

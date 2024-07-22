@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-21 23:46:40
+ * @ Modified time: 2024-07-22 11:37:11
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
