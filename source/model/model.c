@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-22 17:37:03
+ * @ Modified time: 2024-07-22 23:07:22
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -117,7 +117,7 @@ int Model_generateConnection(Node *pSourceNode, Node *pTargetNode) {
   int success = 0;
 
   // Push the source node unto the queue
-  Queue_push(nodeQueue, pSourceNode);
+  Queue_add(nodeQueue, pSourceNode);
 
   // Clear the prev of the node in case it was set in a previous traversal
   Node_setPrev(pSourceNode, NULL);
@@ -126,7 +126,7 @@ int Model_generateConnection(Node *pSourceNode, Node *pTargetNode) {
   while(Queue_getCount(nodeQueue) && !success) {
 
     // Grab the head and its details
-    Node *pHead = Queue_pop(nodeQueue);
+    Node *pHead = Queue_remove(nodeQueue);
     HashMap *adjNodes = pHead->adjNodes;
     
     // Grab the keys we need to iterate over
@@ -158,7 +158,7 @@ int Model_generateConnection(Node *pSourceNode, Node *pTargetNode) {
       Node_setPrev(pNextNode, pHead);
 
       // Append the node to the queue
-      Queue_push(nodeQueue, pNextNode);
+      Queue_add(nodeQueue, pNextNode);
     }
 
     // Add the head to visited
@@ -341,14 +341,6 @@ int Model_loadData(char *filepath) {
 
   // Success
   return 1;
-}
-
-void Model_serializeData() {
-  
-}
-
-void Model_deserializeData() {
-  
 }
 
 #endif

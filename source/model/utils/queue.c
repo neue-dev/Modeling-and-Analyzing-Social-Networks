@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 13:47:39
- * @ Modified time: 2024-07-21 23:44:03
+ * @ Modified time: 2024-07-22 23:09:50
  * @ Description:
  * 
  * A queue data structure which comes in handy for traversing our data.
@@ -112,7 +112,7 @@ void *Queue_peek(Queue *this) {
  * @param   { Queue * }   this    The queue to modify.
  * @param   { void * }    pData   The data to insert into the queue.
 */
-void Queue_push(Queue *this, void *pData) {
+void Queue_add(Queue *this, void *pData) {
   
   // Create the entry to push first
   Entry *pEntry = Entry_new("", pData);
@@ -145,7 +145,7 @@ void Queue_push(Queue *this, void *pData) {
  * @param   { Queue * }   this    The queue to modify.
  * @return  { void * }            The data at the head of the queue.
 */
-void *Queue_pop(Queue *this) {
+void *Queue_remove(Queue *this) {
   
   // We check if the head is null first
   if(this->pHead == NULL)
