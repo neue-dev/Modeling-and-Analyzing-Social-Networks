@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-22 11:37:11
+ * @ Modified time: 2024-07-22 12:17:56
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -158,16 +158,92 @@ void Model_printConnection(char *sourceId, char *targetId, int cols) {
 
   // We proceed to traverse the dataset if both nodes were fine
   Queue *nodeQueue = Queue_new();
+  HashMap *visited = HashMap_new();
+
+  // A constant we use to know something has been visited
+  char *VISITED = "VISITED";
+  int done = 0;
 
   // Push the source node unto the queue
-  // Queue_push();
+  Queue_push(nodeQueue, pSourceNode);
+
+  // Clear the prev of the node in case it was set in a previous traversal
+  Node_setPrev(pSourceNode, NULL);
 
   // While the queue isn't empty
-  do {
-    
-    
+  while(Queue_getCount(nodeQueue) && !done) {
 
-  } while(Queue_getCount(nodeQueue));
+    // Grab the head and its details
+    Node *pHead = Queue_pop(nodeQueue);
+    HashMap *adjNodes = pHead->adjNodes;
+    
+    // Grab the keys we need to iterate over
+    char **nextNodeKeys = adjNodes->keys;
+
+    // Check if we've reached the destination
+    if(pHead == pTargetNode) {
+      done = 1;
+      break;
+    }
+
+    // For each of the adjacent nodes
+    for(int i = 0; i < adjNodes->count; i++) {
+
+      // Grab the key
+      char *key = nextNodeKeys[i];
+
+      // Next node
+      Node *pNextNode = HashMap_get(adjNodes, key);
+
+      // Check if visited
+      if(HashMap_get(visited, pNextNode->id) == VISITED)
+        continue;
+
+      // Add the next node to visited
+      HashMap_put(visited, pNextNode->id, VISITED);
+
+      // Set the prev of the node
+      Node_setPrev(pNextNode, pHead);
+
+      // Append the node to the queue
+      Queue_push(nodeQueue, pNextNode);
+    }
+
+    // Add the head to visited
+    HashMap_put(visited, pHead->id, VISITED);
+  } 
+
+  // No path could be found
+  if(!done) {
+    printf("\tA path could not be found.\n");
+    return;
+  }
+
+  // A path was found
+  printf("\tThe following path was found.\n");
+  printf("\t%s->\t", pTargetNode->id);
+
+  // Some iterator vars
+  int counter = 0;
+  Node *pNode = pTargetNode; 
+
+  // Print the connections
+  while(pNode->pPrevNode != NULL) {
+    
+    // Column formatting
+    if(++counter % cols == 0)
+      printf("\n\t");
+
+    // Print the ids
+    printf("%s->\t", pNode->pPrevNode->id);
+
+    // Go to next in chain
+    pNode = pNode->pPrevNode;  
+  }
+
+  // Garbage collection
+  HashMap_kill(visited, 0);
+  Queue_kill(nodeQueue, 0);
 }
 
 /**
