@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-22 23:44:06
+ * @ Modified time: 2024-07-22 23:47:17
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -257,11 +257,8 @@ void Model_printConnection(char *sourceId, char *targetId, int cols) {
     pNode = pNode->pPrevNode;
   }
 
-  // A path was found
+  // Print that a path was found, reassign pNode to stack top
   printf("\tThe following path was found.\n\n");
-  printf("\t* %s\t", pTargetNode->id);
-
-  // Grab stack top
   pNode = Stack_pop(pPathStack);
 
   // Very unconverntional for loop
