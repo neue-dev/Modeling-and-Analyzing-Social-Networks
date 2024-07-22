@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 13:49:08
- * @ Modified time: 2024-07-22 23:20:46
+ * @ Modified time: 2024-07-22 23:46:15
  * @ Description:
  * 
  * An entry we use for both hashmaps and queues.
@@ -115,8 +115,14 @@ void Entry_kill(Entry *this, int bShouldFreeData) {
  * @param   { Entry * }   pNext   The next entry.
  */
 void Entry_chain(Entry *pPrev, Entry *pNext) {
-  pPrev->pNext = pNext;
-  pNext->pPrev = pPrev;
+  
+  // Check if valid assignment
+  if(pPrev != NULL)
+    pPrev->pNext = pNext;
+
+  // Check if valid assignment
+  if(pNext != NULL)
+    pNext->pPrev = pPrev;
 }
 
 #endif
