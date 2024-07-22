@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 13:49:08
- * @ Modified time: 2024-07-22 11:38:05
+ * @ Modified time: 2024-07-22 23:20:46
  * @ Description:
  * 
  * An entry we use for both hashmaps and queues.
@@ -31,6 +31,9 @@ struct Entry {
   // Used to handle collisions in the hashmap
   Entry *pNext;
 
+  // The prev entry in the linked list
+  // Useful for the stack
+  Entry *pPrev;
 };
 
 /**
@@ -70,6 +73,7 @@ Entry *_Entry_init(Entry *this, char *key, void *pData) {
 
   // Set the next to null by default
   this->pNext = NULL;
+  this->pPrev = NULL;
 
   // Return the new initted entry
   return this;
@@ -105,13 +109,14 @@ void Entry_kill(Entry *this, int bShouldFreeData) {
 }
 
 /**
- * Chains the given next entry unto the current one.
+ * Chains the given next entry unto the previous one.
  * 
- * @param   { Entry * }   this    The entry to modify.
- * @param   { Entry * }   pNext   The entry to chain.
+ * @param   { Entry * }   pPrev   The previous entry.
+ * @param   { Entry * }   pNext   The next entry.
  */
-void Entry_chain(Entry *this, Entry *pNext) {
-  this->pNext = pNext;
+void Entry_chain(Entry *pPrev, Entry *pNext) {
+  pPrev->pNext = pNext;
+  pNext->pPrev = pPrev;
 }
 
 #endif
