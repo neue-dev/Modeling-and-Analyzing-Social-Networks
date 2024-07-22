@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-22 23:08:40
- * @ Modified time: 2024-07-22 23:22:12
+ * @ Modified time: 2024-07-22 23:30:42
  * @ Description:
  * 
  * Our stack implementation.
@@ -84,6 +84,64 @@ void Stack_kill(Stack *this, int bShouldFreeData) {
 
   // Finally, free the stack
   free(this);
+}
+
+/**
+ * Pushes an element to the top of the stack.
+ * 
+ * @param   { Stack * }   this  The stack to modify.
+ * @return  { void * }          The data of the popped element.
+*/
+void Stack_push(Stack *this, void *pData) {
+  
+  // Create the entry
+  Entry *pTop = Entry_new("", pData);
+
+  // Increment the count
+  this->count++;
+
+  // If it's the first entry
+  if(this->pTop == NULL) {
+    this->pTop = pTop;
+
+    return;
+  }
+
+  // Chain the new entry
+  Entry_chain(this->pTop, pTop);
+
+  // Set the new top element
+  this->pTop = pTop;
+}
+
+/**
+ * Removes the top element from the stack.
+ * Returns the data of that element.
+ * 
+ * @param   { Stack * }   this  The stack to modify.
+ * @return  { void * }          The data of the popped element.
+*/
+void *Stack_pop(Stack *this) {
+
+  // Check if the top is null anyway
+  if(this->pTop == NULL)
+    return NULL;
+
+  // Otherwise, remove the top and return its data
+  Entry *pTop = this->pTop;
+  void *pData = pTop->pData;
+
+  // Set the new top
+  this->pTop = pTop->pPrev;
+  
+  // Free the entry
+  Entry_kill(pTop, 0);
+
+  // Reduce count
+  this->count--;
+
+  // Return the data
+  return pData;
 }
 
 #endif
