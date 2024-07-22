@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-22 23:07:22
+ * @ Modified time: 2024-07-22 23:44:06
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -13,6 +13,7 @@
 
 #include "../io/file.c"
 #include "./utils/hashmap.c"
+#include "./utils/stack.c"
 #include "./utils/queue.c"
 #include "./record.c"
 #include "./node.c"
@@ -242,30 +243,47 @@ void Model_printConnection(char *sourceId, char *targetId, int cols) {
     return;
   }
 
+  // Create a new stack so we can reverse the order
+  Stack *pPathStack = Stack_new();
+  Node *pNode = pTargetNode; 
+
+  // Put the nodes unto the stack
+  while(pNode != NULL) {
+
+    // Push the current node
+    Stack_push(pPathStack, pNode);
+
+    // Go to adjacent node
+    pNode = pNode->pPrevNode;
+  }
+
   // A path was found
   printf("\tThe following path was found.\n\n");
   printf("\t* %s\t", pTargetNode->id);
 
-  // Some iterator vars
-  int counter = 0;
-  Node *pNode = pTargetNode; 
+  // Grab stack top
+  pNode = Stack_pop(pPathStack);
 
-  // Print the connections
-  while(pNode->pPrevNode != NULL) {
+  // Very unconverntional for loop
+  for(int i = 0; pNode != NULL; i++) {
     
     // Column formatting
-    if(++counter % cols == 0)
+    if(i % cols == 0)
       printf("\n\t");
 
     // Print the ids
-    printf("> %s\t", pNode->pPrevNode->id);
+    printf("> %s\t", pNode->id);
 
     // Go to next in chain
-    pNode = pNode->pPrevNode;  
+    pNode = Stack_pop(pPathStack);
   }
 
   // Cleaner printing
   printf("\n");
+
+  // Free the memory
+  // Don't free the data cuz we're editing live nodes
+  Stack_kill(pPathStack, 0);
 }
 
 /**

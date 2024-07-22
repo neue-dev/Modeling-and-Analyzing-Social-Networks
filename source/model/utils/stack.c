@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-22 23:08:40
- * @ Modified time: 2024-07-22 23:30:42
+ * @ Modified time: 2024-07-22 23:33:34
  * @ Description:
  * 
  * Our stack implementation.
@@ -127,6 +127,9 @@ void *Stack_pop(Stack *this) {
   if(this->pTop == NULL)
     return NULL;
 
+  // Otherwise, decrement the size
+  this->count--;
+  
   // Otherwise, remove the top and return its data
   Entry *pTop = this->pTop;
   void *pData = pTop->pData;
@@ -136,9 +139,6 @@ void *Stack_pop(Stack *this) {
   
   // Free the entry
   Entry_kill(pTop, 0);
-
-  // Reduce count
-  this->count--;
 
   // Return the data
   return pData;
