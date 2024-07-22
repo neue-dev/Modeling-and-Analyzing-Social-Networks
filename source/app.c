@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 18:40:56
- * @ Modified time: 2024-07-21 15:48:42
+ * @ Modified time: 2024-07-22 12:19:50
  * @ Description:
  * 
  * The main flow of the application.
@@ -159,7 +159,7 @@ void App_friends() {
 
   // Type any key to continue
   UI__();
-  UI_indent(APP_INDENT_INFO); UI_s("Inspect another node?"); UI__();
+  UI_indent(APP_INDENT_INFO); UI_s("Inspect another node? (y/n)"); UI__();
   
   // Stay on page if yes
   if(UI_response(APP_INDENT_PROMPT))
@@ -190,7 +190,7 @@ void App_connections() {
 
   // Type any key to continue
   UI__();
-  UI_indent(APP_INDENT_INFO); UI_s("View another connection?"); UI__();
+  UI_indent(APP_INDENT_INFO); UI_s("View another connection? (y/n)"); UI__();
   
   // Stay on page if yes
   if(UI_response(APP_INDENT_PROMPT))

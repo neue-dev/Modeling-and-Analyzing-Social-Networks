@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-22 12:17:56
+ * @ Modified time: 2024-07-22 12:26:15
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -220,8 +220,8 @@ void Model_printConnection(char *sourceId, char *targetId, int cols) {
   }
 
   // A path was found
-  printf("\tThe following path was found.\n");
-  printf("\t%s->\t", pTargetNode->id);
+  printf("\tThe following path was found.\n\n");
+  printf("\t* %s\t", pTargetNode->id);
 
   // Some iterator vars
   int counter = 0;
@@ -235,11 +235,14 @@ void Model_printConnection(char *sourceId, char *targetId, int cols) {
       printf("\n\t");
 
     // Print the ids
-    printf("%s->\t", pNode->pPrevNode->id);
+    printf("> %s\t", pNode->pPrevNode->id);
 
     // Go to next in chain
     pNode = pNode->pPrevNode;  
   }
+
+  // Cleaner printing
+  printf("\n");
 
   // Garbage collection
   HashMap_kill(visited, 0);
