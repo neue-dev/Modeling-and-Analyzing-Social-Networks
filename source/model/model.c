@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-22 12:26:15
+ * @ Modified time: 2024-07-22 17:37:03
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -98,6 +98,83 @@ void Model_addAdj(char *sourceId, char *targetId) {
 }
 
 /**
+ * "Generates" the connection between two nodes.
+ * By this, we mean that it initializes the "prev" variables of the nodes to the represent a connection between the nodes.
+ * Returns whether or not a connection between the two nodes was found.
+ * 
+ * @param   { Node * }  pSourceNode   The source node of the connection.
+ * @param   { Node * }  pTargetNode   The target node of the connection.
+ * @return  { int }                   Whether or not a connection could be found.
+*/
+int Model_generateConnection(Node *pSourceNode, Node *pTargetNode) {
+
+  // We proceed to traverse the dataset if both nodes were fine
+  Queue *nodeQueue = Queue_new();
+  HashMap *visited = HashMap_new();
+
+  // A constant we use to know something has been visited
+  char *VISITED = "VISITED";
+  int success = 0;
+
+  // Push the source node unto the queue
+  Queue_push(nodeQueue, pSourceNode);
+
+  // Clear the prev of the node in case it was set in a previous traversal
+  Node_setPrev(pSourceNode, NULL);
+
+  // While the queue isn't empty
+  while(Queue_getCount(nodeQueue) && !success) {
+
+    // Grab the head and its details
+    Node *pHead = Queue_pop(nodeQueue);
+    HashMap *adjNodes = pHead->adjNodes;
+    
+    // Grab the keys we need to iterate over
+    char **nextNodeKeys = adjNodes->keys;
+
+    // Check if we've reached the destination
+    if(pHead == pTargetNode) {
+      success = 1;
+      break;
+    }
+
+    // For each of the adjacent nodes
+    for(int i = 0; i < adjNodes->count; i++) {
+
+      // Grab the key
+      char *key = nextNodeKeys[i];
+
+      // Next node
+      Node *pNextNode = HashMap_get(adjNodes, key);
+
+      // Check if visited
+      if(HashMap_get(visited, pNextNode->id) == VISITED)
+        continue;
+
+      // Add the next node to visited
+      HashMap_put(visited, pNextNode->id, VISITED);
+
+      // Set the prev of the node
+      Node_setPrev(pNextNode, pHead);
+
+      // Append the node to the queue
+      Queue_push(nodeQueue, pNextNode);
+    }
+
+    // Add the head to visited
+    HashMap_put(visited, pHead->id, VISITED);
+  }
+
+  // Garbage collection
+  // We're only deleting the data structures, so the data itself should be safe
+  HashMap_kill(visited, 0);
+  Queue_kill(nodeQueue, 0);
+
+  // Return whether or not it succeeded
+  return success;
+}
+
+/**
  * Gets the adjacencies to a particular node.
  * 
  * @param   { char * }  id    The id of the node to inspect.
@@ -156,65 +233,11 @@ void Model_printConnection(char *sourceId, char *targetId, int cols) {
     return;
   }
 
-  // We proceed to traverse the dataset if both nodes were fine
-  Queue *nodeQueue = Queue_new();
-  HashMap *visited = HashMap_new();
-
-  // A constant we use to know something has been visited
-  char *VISITED = "VISITED";
-  int done = 0;
-
-  // Push the source node unto the queue
-  Queue_push(nodeQueue, pSourceNode);
-
-  // Clear the prev of the node in case it was set in a previous traversal
-  Node_setPrev(pSourceNode, NULL);
-
-  // While the queue isn't empty
-  while(Queue_getCount(nodeQueue) && !done) {
-
-    // Grab the head and its details
-    Node *pHead = Queue_pop(nodeQueue);
-    HashMap *adjNodes = pHead->adjNodes;
-    
-    // Grab the keys we need to iterate over
-    char **nextNodeKeys = adjNodes->keys;
-
-    // Check if we've reached the destination
-    if(pHead == pTargetNode) {
-      done = 1;
-      break;
-    }
-
-    // For each of the adjacent nodes
-    for(int i = 0; i < adjNodes->count; i++) {
-
-      // Grab the key
-      char *key = nextNodeKeys[i];
-
-      // Next node
-      Node *pNextNode = HashMap_get(adjNodes, key);
-
-      // Check if visited
-      if(HashMap_get(visited, pNextNode->id) == VISITED)
-        continue;
-
-      // Add the next node to visited
-      HashMap_put(visited, pNextNode->id, VISITED);
-
-      // Set the prev of the node
-      Node_setPrev(pNextNode, pHead);
-
-      // Append the node to the queue
-      Queue_push(nodeQueue, pNextNode);
-    }
-
-    // Add the head to visited
-    HashMap_put(visited, pHead->id, VISITED);
-  } 
+  // Look for a connection
+  int success = Model_generateConnection(pSourceNode, pTargetNode);   
 
   // No path could be found
-  if(!done) {
+  if(!success) {
     printf("\tA path could not be found.\n");
     return;
   }
@@ -243,10 +266,6 @@ void Model_printConnection(char *sourceId, char *targetId, int cols) {
 
   // Cleaner printing
   printf("\n");
-
-  // Garbage collection
-  HashMap_kill(visited, 0);
-  Queue_kill(nodeQueue, 0);
 }
 
 /**
