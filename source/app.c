@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 18:40:56
- * @ Modified time: 2024-07-23 18:47:07
+ * @ Modified time: 2024-07-23 18:54:15
  * @ Description:
  * 
  * The main flow of the application.
@@ -152,12 +152,40 @@ void App_load() {
 }
 
 /**
+ * A warning to place when invalid dataset was loaded.
+ * 
+ * @return  { int }   Whether or not no dataset is loaded.
+ */
+int App_hasNoDataset() {
+
+  // A dataset was loaded
+  if(strcmp(Model.activeDataset, MODEL_EMPTY))
+    return 0;
+  
+  // Warning
+  UI__();
+  UI_indent(APP_INDENT_INFO); UI_s("No dataset is currently loaded."); UI__();
+  UI_indent(APP_INDENT_SUBINFO); UI_s("Press any key to continue."); UI__();
+  UI_response(APP_INDENT_PROMPT);
+
+  // Go to menu
+  App.appState = APPSTATE_MENU;
+
+  // No dataset was loaded
+  return 1;
+}
+
+/**
  * Runs the model and displays the friends of a given node.
 */
 void App_friends() {
 
   // The user input
   char id[256];
+
+  // No dataset loaded
+  if(App_hasNoDataset())
+    return;
 
   // Print the prompt
   UI_indent(APP_INDENT_INFO); UI_s("You are now viewing the friend count for a given node."); UI__();
@@ -187,6 +215,10 @@ void App_connections() {
   // The source and target ids
   char sourceId[256];
   char targetId[256];
+
+  // No dataset loaded
+  if(App_hasNoDataset())
+    return;
 
   // Prompt for both ids
   UI_indent(APP_INDENT_INFO); UI_s("You are now viewing connections between two nodes."); UI__();
