@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 18:40:56
- * @ Modified time: 2024-07-22 12:19:50
+ * @ Modified time: 2024-07-23 18:47:07
  * @ Description:
  * 
  * The main flow of the application.
@@ -92,8 +92,16 @@ void App_menu() {
   UI__();
   
   // Wait for user input
+  char input[16];
   int option = 0;
-  scanf("%d", &option);
+
+  // Handles errors I think
+  scanf("%s", &input);
+  snprintf(input, 16, "%s", input);
+  
+  // Set the default option value
+  if(!sscanf(input, "%d", &option))
+    option = -1;
 
   // Go to the next page
   switch(option) {
@@ -101,7 +109,9 @@ void App_menu() {
     case 1: App.appState = APPSTATE_LOAD; break;
     case 2: App.appState = APPSTATE_FRIENDS; break;
     case 3: App.appState = APPSTATE_CONNECTIONS; break;
-    default: App.appState = APPSTATE_EXIT; break;
+
+    // Do nothing and just remprompt
+    default: App.appState = APPSTATE_MENU; break;
   }
 }
 
