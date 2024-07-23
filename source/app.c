@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 18:40:56
- * @ Modified time: 2024-07-23 18:54:15
+ * @ Modified time: 2024-07-23 19:02:42
  * @ Description:
  * 
  * The main flow of the application.
@@ -14,7 +14,7 @@
 #include "./model/model.c"
 
 #define APP_DEFAULT_DATASET "./data/Caltech36.txt"
-#define APP_DEFAULT_COLS 5
+#define APP_DEFAULT_COLS 7
 
 #define APP_INDENT_INFO "[] "
 #define APP_INDENT_EMPTY "   "

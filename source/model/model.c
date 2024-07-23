@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-22 23:47:17
+ * @ Modified time: 2024-07-23 19:10:04
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -269,7 +269,7 @@ void Model_printConnection(char *sourceId, char *targetId, int cols) {
       printf("\n\t");
 
     // Print the ids
-    printf("> %s\t", pNode->id);
+    printf("=> %s\t", pNode->id);
 
     // Go to next in chain
     pNode = Stack_pop(pPathStack);

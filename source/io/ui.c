@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 13:45:05
- * @ Modified time: 2024-07-20 15:56:58
+ * @ Modified time: 2024-07-23 19:00:29
  * @ Description:
  * 
  * This has a bunch of utilities for displaying stuff on the screen.
@@ -12,6 +12,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define UI_INDENT_SIZE 4
 
@@ -48,9 +49,14 @@ void UI_init() {
 
 /**
  * Clears the current console.
+ * I couldn't be bothered to clean this up.
 */
 void UI_clear() {
+  #ifndef _WIN32
   printf("\e[H\e[2J\e[3J");
+  #else
+  system("cls");
+  #endif
 }
 
 /**
