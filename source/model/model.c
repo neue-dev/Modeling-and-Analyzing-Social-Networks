@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-24 22:42:18
+ * @ Modified time: 2024-07-25 00:31:16
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -14,6 +14,7 @@
 #include "../utils/bmp.c"
 #include "../utils/color.c"
 #include "../utils/rand.c"
+#include "../utils/point.c"
 
 #include "./structs/hashmap.c"
 #include "./structs/stack.c"
@@ -366,11 +367,13 @@ int Model_loadData(char *filepath) {
 /**
  * Configures the data for drawing.
 */
-void Model_drawData() {
+void Model_drawData(char *filename) {
 
   // ! move this elsewhere later
-  int width = 256;
-  int height = 256;
+  int width = 1920;
+  int height = 1080;
+  int centerX = width / 2;
+  int centerY = height / 2;
   
   // The number of nodes we're going to plot
   // The number of iterations to run the force sim
@@ -378,10 +381,7 @@ void Model_drawData() {
   int iterations = 100;
   
   // The coordinates and weight of the nodes
-  int x[size];
-  int y[size];
-  int fx[size];
-  int fy[size];
+  Point points[size];
   double w[size];
   double maxW = 0;
 
@@ -391,23 +391,20 @@ void Model_drawData() {
     // Grab the node
     Node *pNode = Model.nodePointers[i];
     
-    // Init the data
-    x[i] = Rand_getMaxxed(width);
-    y[i] = Rand_getMaxxed(height);
-    w[i] = pNode->adjNodes->count;
-    
-    // Init the forces
-    fx[i] = 0;
-    fy[i] = 0;
+    // Init the point data
+    Point_init(&points[i], 
+      Rand_getMaxxed(width) * 1.0,    // x coord 
+      Rand_getMaxxed(height) * 1.0,   // y coord
+      pNode->adjNodes->count);  // weight
     
     // Grab the largest weight
-    maxW = maxW < w[i] ? w[i] : maxW;
+    maxW = maxW < points[i].w ? points[i].w : maxW;
   }
 
   // Normalize the weights
   for(int i = 0; i < size; i++) {
-    w[i] /= maxW;
-    w[i] += 1;
+    points[i].w /= maxW;
+    points[i].w += 1;
   }
 
   // For each of the simulation iterations
@@ -416,8 +413,81 @@ void Model_drawData() {
     // For each of the nodes
     for(int j = 0; j < size; j++) {
       
+      // Grab the point
+      Point *pPoint = &points[j];
+      Node *pPointNode = Model.nodePointers[j];
+
+      // Compute dist from center
+      double distSquareCenter = Point_getDistSquare(pPoint, centerX, centerY);
+      distSquareCenter = distSquareCenter < 0.1 ? 0.1 : distSquareCenter;
+
+      // Compute forces 
+      Point_setForce(pPoint, 0, 0);
+      Point_addForce(pPoint, 
+        Point_getDistX(pPoint, centerX) / distSquareCenter * 1000.0, 
+        Point_getDistY(pPoint, centerY) / distSquareCenter * 1000.0);
+
+      // For all the other points
+      for(int k = 0; k < size; k++) {
+        
+        // Grab the other point
+        Point *pOther = &points[k];
+        Node *pOtherNode = Model.nodePointers[k];
+        int mult = 1;
+
+        // Skip self
+        if(k == j)
+          continue;
+
+        // Check if there's a connection
+        // If there is, invert the force
+        if(HashMap_get(pPointNode->adjNodes, pOtherNode->id) == pOtherNode)
+          mult *= -1;
+
+        // Distance between points
+        double distSquarePoint = Point_getDistSquare(pPoint, pOther->x, pOther->y);
+        distSquarePoint = distSquarePoint < 0.1 ? 0.1 : distSquarePoint;
+
+        // Add repuslive force
+        Point_addForce(pPoint, 
+          mult * -Point_getDistX(pPoint, pOther->x) / distSquarePoint / 1000.0, 
+          mult * -Point_getDistY(pPoint, pOther->y) / distSquarePoint / 1000.0);
+      }
+    }
+
+    // Move the points after
+    for(int j = 0; j < size; j++)
+      Point_move(&points[j]);
+  }
+
+  // Create the bmp
+  BMP bmp;
+  BMP_create(&bmp, width, height);
+
+  // Populate with random pixels for now
+  color red = Color_fromRGB(255, 0, 0);
+  color blue = Color_fromRGB(0, 0, 255);
+
+  for(int i = 0; i < size; i++) {
+
+    // Grab the coords
+    int x = points[i].x;
+    int y = points[i].y;
+
+    // Make sure the point is in bounds
+    if(x - 1 >= 0 && x + 1 < width &&
+      y - 1 >= 0 && y + 1 < height) {
+      BMP_encodePixel(&bmp, x, y, blue);
+      BMP_encodePixel(&bmp, x - 1, y, blue);
+      BMP_encodePixel(&bmp, x, y - 1, blue);
+      BMP_encodePixel(&bmp, x + 1, y, blue);
+      BMP_encodePixel(&bmp, x, y + 1, blue);
     }
   }
+
+  // Write the file
+  BMP_writeFile(&bmp, filename);
+  BMP_kill(&bmp);
 }
 
 /**
