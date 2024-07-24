@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 18:40:56
- * @ Modified time: 2024-07-23 19:02:42
+ * @ Modified time: 2024-07-24 22:01:45
  * @ Description:
  * 
  * The main flow of the application.
@@ -82,6 +82,9 @@ void App_init() {
 */
 void App_menu() {
 
+  // ! remove
+  Model_drawData("demo.bmp");
+
   // Print the options
   UI_indent(APP_INDENT_INFO); UI_s("Select what to do next."); UI__();
   UI__();
@@ -92,17 +95,9 @@ void App_menu() {
   UI__();
   
   // Wait for user input
-  char input[16];
   int option = 0;
-
-  // Handles errors I think
-  scanf("%s", &input);
-  snprintf(input, 16, "%s", input);
+  scanf(" %d", &option);
   
-  // Set the default option value
-  if(!sscanf(input, "%d", &option))
-    option = -1;
-
   // Go to the next page
   switch(option) {
     case 0: App.appState = APPSTATE_EXIT; break;

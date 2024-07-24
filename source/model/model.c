@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-23 19:10:04
+ * @ Modified time: 2024-07-24 22:06:48
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -12,9 +12,13 @@
 #define MODEL_C
 
 #include "../io/file.c"
+#include "../io/bmp.c"
+#include "../io/color.c"
+
 #include "./utils/hashmap.c"
 #include "./utils/stack.c"
 #include "./utils/queue.c"
+
 #include "./record.c"
 #include "./node.c"
 
@@ -356,6 +360,36 @@ int Model_loadData(char *filepath) {
 
   // Success
   return 1;
+}
+
+/**
+ * Draws the model into a bmp.
+*/
+void Model_drawData(char *filename) {
+  
+  // The bmp file and its details
+  BMP bmp;
+  int width = 512;
+  int height = 512;
+
+  // Create the bmp
+  BMP_create(&bmp, width, height);
+
+  // Populate with random pixels for now
+  color red = Color_fromRGB(255, 0, 0);
+  color blue = Color_fromRGB(0, 0, 255);
+
+  // Encode the pixel data
+  for(int i = 0; i < width; i++) {
+    for(int j = 0; j < height; j++) {
+      if((i + j) % 2) BMP_encodePixel(&bmp, i, j, Color_lerp(red, blue, (i) / ((double) width)));
+      else BMP_encodePixel(&bmp, i, j, Color_lerp(blue, red, (j) / ((double) height)));
+    }
+  }
+
+  // Write the file
+  BMP_writeFile(&bmp, filename);
+  BMP_kill(&bmp);
 }
 
 #endif

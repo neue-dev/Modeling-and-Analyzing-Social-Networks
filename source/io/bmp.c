@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-24 18:04:46
- * @ Modified time: 2024-07-24 21:42:35
+ * @ Modified time: 2024-07-24 22:06:37
  * @ Description:
  * 
  * Utilities for managing bmp state while creating bmp files.
@@ -237,6 +237,16 @@ void BMP_writeFile(BMP *pBMP, char* filename) {
 
   // Close the file
   fclose(pFile);
+}
+
+/**
+ * Kills the buffer within current bmp instance.
+ * Performs other cleanup (if needed) for BMP file.
+ * 
+ * @param   { BMP * }   pBMP  The bmp file to clean up.
+*/
+void BMP_kill(BMP *pBMP) {
+  free(pBMP->buffer);
 }
 
 #endif
