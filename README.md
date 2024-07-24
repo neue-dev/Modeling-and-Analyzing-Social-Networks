@@ -2,7 +2,13 @@
 
 ![overview](./README/header-overview.png)
 
-Mention a disclaimer about how you will be referring to some of the constructs in the program as classes even though they technically aren't. 
+This project aims to provide tools that enable us to analyze the structure of social networks. Any dataset containing adjacency information across nodes may be used, and nodes may be indexed using any schema (although the original project specifications limited node ids to integer values, any string without whitespaces are accepted by the program). 
+
+The initial plan for the project involved using Java for the code base; however, after attempting to read the larger datasets using the core functionalities enabled by the default Java SDK, it was decided that IO operations could be done much more efficiently in C. Although Java provided more language tools that would enable implementing the project with much less hassle, Java was considerably slower at reading the input files. The author wanted to be able to model larger datasets.
+
+An important thing to note: object-oriented programming is not idiomatic in C (much less the idea of a "class"). C structs can only do so much to emulate classes, and binding methods to these structs does nothing but convolute code.
+
+### 1.1 Input Formats
 
 ![components](./README/header-components.png)
 

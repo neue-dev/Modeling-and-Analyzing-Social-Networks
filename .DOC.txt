@@ -1,5 +1,9 @@
 Resources I consulted while doing this project.
 
-[ murmur hash: a good hashing function ]..........https://en.wikipedia.org/wiki/MurmurHash
+[ convert to little endian ]......................https://stackoverflow.com/questions/2182002/how-to-convert-big-endian-to-little-endian-in-c-without-using-library-functions
+[ encoding a BMP file in C ]......................https://stackoverflow.com/questions/11004868/creating-a-bmp-file-bitmap-in-c
+[ force-directed graph drawing ]..................https://en.wikipedia.org/wiki/Force-directed_graph_drawing
 [ inline functions in C ].........................https://stackoverflow.com/questions/31108159/what-is-the-use-of-the-inline-keyword-in-c
+[ murmur hash: a good hashing function ]..........https://en.wikipedia.org/wiki/MurmurHash
 [ passing variable arguments ]....................https://stackoverflow.com/questions/1056411/how-to-pass-variable-number-of-arguments-to-printf-sprintf
+[ writing a BMP file from scratch ]...............https://lmcnulty.me/words/bmp-output/
