@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-24 22:25:28
+ * @ Modified time: 2024-07-24 22:42:18
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -367,18 +367,56 @@ int Model_loadData(char *filepath) {
  * Configures the data for drawing.
 */
 void Model_drawData() {
+
+  // ! move this elsewhere later
+  int width = 256;
+  int height = 256;
   
   // The number of nodes we're going to plot
+  // The number of iterations to run the force sim
   int size = Model.nodeCount;
+  int iterations = 100;
   
   // The coordinates and weight of the nodes
   int x[size];
   int y[size];
-  int w[size];
+  int fx[size];
+  int fy[size];
+  double w[size];
+  double maxW = 0;
 
   // Init the nodes with random values and appropriate weights
-  for(int i = 0; i < Model.nodeCount; i++) {
+  for(int i = 0; i < size; i++) {
     
+    // Grab the node
+    Node *pNode = Model.nodePointers[i];
+    
+    // Init the data
+    x[i] = Rand_getMaxxed(width);
+    y[i] = Rand_getMaxxed(height);
+    w[i] = pNode->adjNodes->count;
+    
+    // Init the forces
+    fx[i] = 0;
+    fy[i] = 0;
+    
+    // Grab the largest weight
+    maxW = maxW < w[i] ? w[i] : maxW;
+  }
+
+  // Normalize the weights
+  for(int i = 0; i < size; i++) {
+    w[i] /= maxW;
+    w[i] += 1;
+  }
+
+  // For each of the simulation iterations
+  for(int i = 0; i < iterations; i++) {
+    
+    // For each of the nodes
+    for(int j = 0; j < size; j++) {
+      
+    }
   }
 }
 
