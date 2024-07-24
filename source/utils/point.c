@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-24 22:43:34
- * @ Modified time: 2024-07-25 00:12:51
+ * @ Modified time: 2024-07-25 03:04:13
  * @ Description:
  * 
  * A vector class.
@@ -72,8 +72,8 @@ void Point_addForce(Point *this, double fx, double fy) {
  * @param   { Point * }   this  The point to move.
 */
 void Point_move(Point *this) {
-  this->x += this->fx; // / (this->w < 0.001 ? 0.001 : this->w);
-  this->y += this->fy; // / (this->w < 0.001 ? 0.001 : this->w);
+  this->x += this->fx / (this->w < 0.001 ? 0.001 : this->w);
+  this->y += this->fy / (this->w < 0.001 ? 0.001 : this->w);
 }
 
 /**
