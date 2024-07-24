@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-24 18:04:46
- * @ Modified time: 2024-07-25 00:50:27
+ * @ Modified time: 2024-07-25 01:42:02
  * @ Description:
  * 
  * Utilities for managing bmp state while creating bmp files.
@@ -228,14 +228,58 @@ void BMP_encodePixel(BMP *pBMP, int x, int y, uint32_t hexcode) {
 
 /**
  * Writes a line into the buffer.
+ * 
+ * @param   { BMP * }     pBMP      The bitmap to modify.
+ * @param   { int }       x1        The x-coordinate of the first point.  
+ * @param   { int }       y1        The y-coordinate of the first point.
+ * @param   { int }       x2        The x-coordinate of the second point.  
+ * @param   { int }       y2        The y-coordinate of the second point.
+ * @param   { uint32_t }  hexcode   The color to encode.
 */
-void BMP_encodeLine() {
+void BMP_encodeLine(BMP *pBMP, int x1, int y1, int x2, int y2, int hexcode) {
   
+  // Get the differences
+  double dx = x2 - x1;
+  double dy = y2 - y1;
+  double m = dy / dx;
+  double s = 0;
+  int i = 0;
+
+  // The drawing point
+  double px = x1;
+  double py = y1;
+
+  // Get the step size
+  if(fabs(dx) >= fabs(dy))
+    s = fabs(dx);
+  else
+    s = fabs(dy);
+
+  // Step size too small anyway
+  if(s < 1)
+    return;
+
+  // Divide differences by step size
+  dx /= s;
+  dy /= s;
+
+  // While we haven't reached the end
+  while(i++ < s) {
+    
+    // Encode the pixel
+    BMP_encodePixel(pBMP, px, py, hexcode);
+    
+    // March the line
+    px += dx;
+    py += dy;
+  }
+
 }
 
 /**
  * Draws a circle on the bitmap.
  * 
+ * @param   { BMP * }     pBMP      The bitmap to modify.
  * @param   { int }       x         The x-coordinate of the circle.  
  * @param   { int }       y         The y-coordinate of the circle.
  * @param   { double }    r         The radius of the circle.  

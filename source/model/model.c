@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-25 00:48:03
+ * @ Modified time: 2024-07-25 01:42:19
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -370,15 +370,15 @@ int Model_loadData(char *filepath) {
 void Model_drawData(char *filename) {
 
   // ! move this elsewhere later
-  int width = 1920;
-  int height = 1080;
+  int width = 1024;
+  int height = 1024;
   int centerX = width / 2;
   int centerY = height / 2;
   
   // The number of nodes we're going to plot
   // The number of iterations to run the force sim
   int size = Model.nodeCount;
-  int iterations = 50;
+  int iterations = 20;
   
   // The coordinates and weight of the nodes
   Point points[size];
@@ -484,6 +484,8 @@ void Model_drawData(char *filename) {
         Color_lerp(blue, white, w));
     }
   }
+
+  BMP_encodeLine(&bmp, centerX, centerY, 200, height, white);
 
   // Draw the adjacencies
 
