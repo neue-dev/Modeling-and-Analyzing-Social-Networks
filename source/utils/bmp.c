@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-24 18:04:46
- * @ Modified time: 2024-07-25 01:42:02
+ * @ Modified time: 2024-07-25 02:58:17
  * @ Description:
  * 
  * Utilities for managing bmp state while creating bmp files.
@@ -9,6 +9,8 @@
 
 #ifndef BMP_C
 #define BMP_C
+
+#include "../utils/color.c"
 
 #include <math.h>
 #include <stdio.h>
@@ -206,13 +208,13 @@ void BMP_create(BMP *pBMP, uint32_t width, uint32_t height) {
 /**
  * Encode a single pixel data into the file.
  * 
- * @param   { BMP * }     pBMP      The bmp struct to use for encoding.
- * @param   { int }       x         The x-coordinate of the pixel.  
- * @param   { int }       y         The y-coordinate of the pixel.  
- * @param   { uint32_t }  hexcode   The hexcode value to encode.  
+ * @param   { BMP * }   pBMP  The bmp struct to use for encoding.
+ * @param   { int }     x     The x-coordinate of the pixel.  
+ * @param   { int }     y     The y-coordinate of the pixel.  
+ * @param   { color }   c     The hexcode value to encode.  
  * 
 */
-void BMP_encodePixel(BMP *pBMP, int x, int y, uint32_t hexcode) {
+void BMP_encodePixel(BMP *pBMP, int x, int y, color c) {
 
   // Check pixel if in bounds
   if(x < 0 || x >= pBMP->width ||
@@ -223,20 +225,57 @@ void BMP_encodePixel(BMP *pBMP, int x, int y, uint32_t hexcode) {
   pBMP->ptr = pBMP->offset + (y * pBMP->width + x) * BMP_COLOR_BYTES;
 
   // Encode the information at that point
-  _BMP_encode24(pBMP, hexcode);
+  _BMP_encode24(pBMP, c);
+}
+
+/**
+ * Blends the given value with the current value of the pixel.
+ * 
+ * @param   { BMP * }     pBMP      The bmp struct to use for encoding.
+ * @param   { int }       x         The x-coordinate of the pixel.  
+ * @param   { int }       y         The y-coordinate of the pixel.  
+ * @param   { color }     c         The hexcode value to encode.
+ * @param   { double }    amount    The amount of blending to do.
+*/
+void BMP_encodeBlend(BMP *pBMP, int x, int y, color c, double amount) {
+  
+  // Check pixel if in bounds
+  if(x < 0 || x >= pBMP->width ||
+    y < 0 || y >= pBMP->height)
+    return;
+
+  // Clamp the amount
+  if(amount < 0) amount = 0;
+  if(amount > 1) amount = 1;
+
+  // Set the pointer first, if coords are valid
+  pBMP->ptr = pBMP->offset + (y * pBMP->width + x) * BMP_COLOR_BYTES;
+
+  // Read the values at the location
+  int r = pBMP->buffer[pBMP->ptr + 0];
+  int g = pBMP->buffer[pBMP->ptr + 1];
+  int b = pBMP->buffer[pBMP->ptr + 2];
+  int oldC = (r << 16) | (g << 8) | (b << 0);
+
+  // Blend the colors
+  c = Color_lerp(oldC, c, amount);
+
+  // Encode the information at that point
+  _BMP_encode24(pBMP, c);
 }
 
 /**
  * Writes a line into the buffer.
  * 
- * @param   { BMP * }     pBMP      The bitmap to modify.
- * @param   { int }       x1        The x-coordinate of the first point.  
- * @param   { int }       y1        The y-coordinate of the first point.
- * @param   { int }       x2        The x-coordinate of the second point.  
- * @param   { int }       y2        The y-coordinate of the second point.
- * @param   { uint32_t }  hexcode   The color to encode.
+ * @param   { BMP * }     pBMP  The bitmap to modify.
+ * @param   { int }       x1    The x-coordinate of the first point.  
+ * @param   { int }       y1    The y-coordinate of the first point.
+ * @param   { int }       x2    The x-coordinate of the second point.  
+ * @param   { int }       y2    The y-coordinate of the second point.
+ * @param   { color }     c     The color to encode.
+ * @param   { double }    a     The alpha value of the line.
 */
-void BMP_encodeLine(BMP *pBMP, int x1, int y1, int x2, int y2, int hexcode) {
+void BMP_encodeLine(BMP *pBMP, int x1, int y1, int x2, int y2, color c, double a) {
   
   // Get the differences
   double dx = x2 - x1;
@@ -267,7 +306,7 @@ void BMP_encodeLine(BMP *pBMP, int x1, int y1, int x2, int y2, int hexcode) {
   while(i++ < s) {
     
     // Encode the pixel
-    BMP_encodePixel(pBMP, px, py, hexcode);
+    BMP_encodeBlend(pBMP, px, py, c, a);
     
     // March the line
     px += dx;
@@ -279,13 +318,14 @@ void BMP_encodeLine(BMP *pBMP, int x1, int y1, int x2, int y2, int hexcode) {
 /**
  * Draws a circle on the bitmap.
  * 
- * @param   { BMP * }     pBMP      The bitmap to modify.
- * @param   { int }       x         The x-coordinate of the circle.  
- * @param   { int }       y         The y-coordinate of the circle.
- * @param   { double }    r         The radius of the circle.  
- * @param   { uint32_t }  hexcode   The hexcode value to encode.  
+ * @param   { BMP * }     pBMP  The bitmap to modify.
+ * @param   { int }       x     The x-coordinate of the circle.  
+ * @param   { int }       y     The y-coordinate of the circle.
+ * @param   { double }    r     The radius of the circle.  
+ * @param   { color }     c     The hexcode value to encode.  
+ * @param   { double }    a     The alpha value of the circle.
 */
-void BMP_encodeCircle(BMP *pBMP, int x, int y, double r, uint32_t hexcode) {
+void BMP_encodeCircle(BMP *pBMP, int x, int y, double r, color c, double a) {
 
   // We go through the x and y values possibly in the circle
   for(int i = -r; i <= r; i++) {
@@ -296,7 +336,7 @@ void BMP_encodeCircle(BMP *pBMP, int x, int y, double r, uint32_t hexcode) {
         continue;
       
       // Otherwise, shade it in
-      BMP_encodePixel(pBMP, x + i, y + j, hexcode);
+      BMP_encodeBlend(pBMP, x + i, y + j, c, a);
     }  
   }
 }

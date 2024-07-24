@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-25 02:06:18
+ * @ Modified time: 2024-07-25 03:01:30
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -406,11 +406,14 @@ void Model_drawData(char *filename) {
 
   // Normalize the weights
   for(int i = 0; i < size; i++) {
-    points[i].w /= maxW;
+    points[i].w /= maxW * 4;
   }
 
   // For each of the simulation iterations
   for(int i = 0; i < iterations; i++) {
+    
+    // Progress update
+    printf("%lf%%,", ((double) (i)) / iterations * 100);
     
     // For each of the nodes
     for(int j = 0; j < size; j++) {
@@ -426,8 +429,8 @@ void Model_drawData(char *filename) {
       // Compute forces 
       Point_setForce(pPoint, 0, 0);
       Point_addForce(pPoint, 
-        Point_getDistX(pPoint, centerX) / distSquareCenter * 1000.0, 
-        Point_getDistY(pPoint, centerY) / distSquareCenter * 1000.0);
+        Point_getDistX(pPoint, centerX) / distSquareCenter * 1000.0 * pPoint->w * pPoint->w, 
+        Point_getDistY(pPoint, centerY) / distSquareCenter * 1000.0 * pPoint->w * pPoint->w);
 
       // For all the other points
       for(int k = 0; k < size; k++) {
@@ -452,8 +455,8 @@ void Model_drawData(char *filename) {
 
         // Add attractive / repuslive force
         Point_addForce(pPoint, 
-          mult * -Point_getDistX(pPoint, pOther->x) / distSquarePoint / 10000.0 * pOther->w * pOther->w, 
-          mult * -Point_getDistY(pPoint, pOther->y) / distSquarePoint / 10000.0 * pOther->w * pOther->w);
+          mult * Point_getDistX(pPoint, pOther->x) / distSquarePoint / 1000.0 * pOther->w * pOther->w, 
+          mult * Point_getDistY(pPoint, pOther->y) / distSquarePoint / 1000.0 * pOther->w * pOther->w);
       }
     }
 
@@ -467,8 +470,8 @@ void Model_drawData(char *filename) {
   BMP_create(&bmp, width, height);
 
   // Populate with random pixels for now
-  color red = Color_fromRGB(255, 0, 0);
-  color blue = Color_fromRGB(0, 0, 255);
+  color red = Color_fromRGB(255, 121, 0);
+  color blue = Color_fromRGB(90, 24, 154);
   color black = Color_fromRGB(0, 0, 0);
   color white = Color_fromRGB(255, 255, 255);
 
@@ -492,7 +495,7 @@ void Model_drawData(char *filename) {
       Point *p2 = HashMap_get(pointMap, adjId);
 
       // Draw the line between the points
-      BMP_encodeLine(&bmp, p1->x, p1->y, p2->x, p2->y, white);
+      BMP_encodeLine(&bmp, p1->x, p1->y, p2->x, p2->y, white, 0.05);
     }
   }
 
@@ -507,8 +510,8 @@ void Model_drawData(char *filename) {
     // Make sure the point is in bounds
     if(x - 1 >= 0 && x + 1 < width &&
       y - 1 >= 0 && y + 1 < height) {
-      BMP_encodeCircle(&bmp, x, y, w * 160, 
-        Color_lerp(blue, red, w));
+      BMP_encodeCircle(&bmp, x, y, w * 25, 
+        Color_lerp(blue, red, w), 0.8);
     }
   }
 
