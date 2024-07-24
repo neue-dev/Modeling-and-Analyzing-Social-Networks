@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-25 01:58:45
+ * @ Modified time: 2024-07-25 02:06:18
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -378,7 +378,7 @@ void Model_drawData(char *filename) {
   // The number of nodes we're going to plot
   // The number of iterations to run the force sim
   int size = Model.nodeCount;
-  int iterations = 250;
+  int iterations = 1000;
   
   // The coordinates and weight of the nodes
   Point points[size];
@@ -443,17 +443,17 @@ void Model_drawData(char *filename) {
 
         // Check if there's a connection
         // If there is, invert the force
-        if(HashMap_get(pPointNode->adjNodes, pOtherNode->id) == pOtherNode)
+        if(HashMap_get(pPointNode->adjNodes, pOtherNode->id) != NULL)
           mult *= -1;
 
         // Distance between points
         double distSquarePoint = Point_getDistSquare(pPoint, pOther->x, pOther->y);
         distSquarePoint = distSquarePoint < 0.1 ? 0.1 : distSquarePoint;
 
-        // Add repuslive force
+        // Add attractive / repuslive force
         Point_addForce(pPoint, 
-          mult * -Point_getDistX(pPoint, pOther->x) / distSquarePoint / 1000.0, 
-          mult * -Point_getDistY(pPoint, pOther->y) / distSquarePoint / 1000.0);
+          mult * -Point_getDistX(pPoint, pOther->x) / distSquarePoint / 10000.0 * pOther->w * pOther->w, 
+          mult * -Point_getDistY(pPoint, pOther->y) / distSquarePoint / 10000.0 * pOther->w * pOther->w);
       }
     }
 
@@ -507,7 +507,7 @@ void Model_drawData(char *filename) {
     // Make sure the point is in bounds
     if(x - 1 >= 0 && x + 1 < width &&
       y - 1 >= 0 && y + 1 < height) {
-      BMP_encodeCircle(&bmp, x, y, w * 16, 
+      BMP_encodeCircle(&bmp, x, y, w * 160, 
         Color_lerp(blue, red, w));
     }
   }
