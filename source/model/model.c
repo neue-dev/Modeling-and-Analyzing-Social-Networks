@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-24 22:06:48
+ * @ Modified time: 2024-07-24 22:25:28
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -11,14 +11,15 @@
 #ifndef MODEL_C
 #define MODEL_C
 
+#include "../utils/bmp.c"
+#include "../utils/color.c"
+#include "../utils/rand.c"
+
+#include "./structs/hashmap.c"
+#include "./structs/stack.c"
+#include "./structs/queue.c"
+
 #include "../io/file.c"
-#include "../io/bmp.c"
-#include "../io/color.c"
-
-#include "./utils/hashmap.c"
-#include "./utils/stack.c"
-#include "./utils/queue.c"
-
 #include "./record.c"
 #include "./node.c"
 
@@ -363,9 +364,28 @@ int Model_loadData(char *filepath) {
 }
 
 /**
+ * Configures the data for drawing.
+*/
+void Model_drawData() {
+  
+  // The number of nodes we're going to plot
+  int size = Model.nodeCount;
+  
+  // The coordinates and weight of the nodes
+  int x[size];
+  int y[size];
+  int w[size];
+
+  // Init the nodes with random values and appropriate weights
+  for(int i = 0; i < Model.nodeCount; i++) {
+    
+  }
+}
+
+/**
  * Draws the model into a bmp.
 */
-void Model_drawData(char *filename) {
+void Model_renderDrawing(char *filename) {
   
   // The bmp file and its details
   BMP bmp;

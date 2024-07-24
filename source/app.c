@@ -83,7 +83,7 @@ void App_init() {
 void App_menu() {
 
   // ! remove
-  Model_drawData("demo.bmp");
+  Model_renderDrawing("demo.bmp");
 
   // Print the options
   UI_indent(APP_INDENT_INFO); UI_s("Select what to do next."); UI__();
