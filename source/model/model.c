@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-25 00:31:16
+ * @ Modified time: 2024-07-25 00:48:03
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -378,7 +378,7 @@ void Model_drawData(char *filename) {
   // The number of nodes we're going to plot
   // The number of iterations to run the force sim
   int size = Model.nodeCount;
-  int iterations = 100;
+  int iterations = 50;
   
   // The coordinates and weight of the nodes
   Point points[size];
@@ -404,7 +404,6 @@ void Model_drawData(char *filename) {
   // Normalize the weights
   for(int i = 0; i < size; i++) {
     points[i].w /= maxW;
-    points[i].w += 1;
   }
 
   // For each of the simulation iterations
@@ -467,23 +466,26 @@ void Model_drawData(char *filename) {
   // Populate with random pixels for now
   color red = Color_fromRGB(255, 0, 0);
   color blue = Color_fromRGB(0, 0, 255);
+  color black = Color_fromRGB(0, 0, 0);
+  color white = Color_fromRGB(255, 255, 255);
 
+  // Draw the nodes themselves
   for(int i = 0; i < size; i++) {
 
     // Grab the coords
     int x = points[i].x;
     int y = points[i].y;
+    double w = points[i].w;
 
     // Make sure the point is in bounds
     if(x - 1 >= 0 && x + 1 < width &&
       y - 1 >= 0 && y + 1 < height) {
-      BMP_encodePixel(&bmp, x, y, blue);
-      BMP_encodePixel(&bmp, x - 1, y, blue);
-      BMP_encodePixel(&bmp, x, y - 1, blue);
-      BMP_encodePixel(&bmp, x + 1, y, blue);
-      BMP_encodePixel(&bmp, x, y + 1, blue);
+      BMP_encodeCircle(&bmp, x, y, w * 16, 
+        Color_lerp(blue, white, w));
     }
   }
+
+  // Draw the adjacencies
 
   // Write the file
   BMP_writeFile(&bmp, filename);

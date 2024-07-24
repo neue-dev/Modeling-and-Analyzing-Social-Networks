@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-24 18:04:46
- * @ Modified time: 2024-07-24 22:06:37
+ * @ Modified time: 2024-07-25 00:50:27
  * @ Description:
  * 
  * Utilities for managing bmp state while creating bmp files.
@@ -10,6 +10,7 @@
 #ifndef BMP_C
 #define BMP_C
 
+#include <math.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -213,12 +214,47 @@ void BMP_create(BMP *pBMP, uint32_t width, uint32_t height) {
 */
 void BMP_encodePixel(BMP *pBMP, int x, int y, uint32_t hexcode) {
 
+  // Check pixel if in bounds
+  if(x < 0 || x >= pBMP->width ||
+    y < 0 || y >= pBMP->height)
+    return;
+
   // Set the pointer first, if coords are valid
-  if(x >= 0 && y >= 0)
-    pBMP->ptr = pBMP->offset + (y * pBMP->width + x) * BMP_COLOR_BYTES;
+  pBMP->ptr = pBMP->offset + (y * pBMP->width + x) * BMP_COLOR_BYTES;
 
   // Encode the information at that point
   _BMP_encode24(pBMP, hexcode);
+}
+
+/**
+ * Writes a line into the buffer.
+*/
+void BMP_encodeLine() {
+  
+}
+
+/**
+ * Draws a circle on the bitmap.
+ * 
+ * @param   { int }       x         The x-coordinate of the circle.  
+ * @param   { int }       y         The y-coordinate of the circle.
+ * @param   { double }    r         The radius of the circle.  
+ * @param   { uint32_t }  hexcode   The hexcode value to encode.  
+*/
+void BMP_encodeCircle(BMP *pBMP, int x, int y, double r, uint32_t hexcode) {
+
+  // We go through the x and y values possibly in the circle
+  for(int i = -r; i <= r; i++) {
+    for(int j = -r; j <= r; j++) {
+
+      // If not in circle
+      if(i * i + j * j > r * r)
+        continue;
+      
+      // Otherwise, shade it in
+      BMP_encodePixel(pBMP, x + i, y + j, hexcode);
+    }  
+  }
 }
 
 /**
