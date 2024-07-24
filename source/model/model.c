@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-25 01:42:19
+ * @ Modified time: 2024-07-25 01:58:45
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -370,19 +370,19 @@ int Model_loadData(char *filepath) {
 void Model_drawData(char *filename) {
 
   // ! move this elsewhere later
-  int width = 1024;
-  int height = 1024;
+  int width = 4096;
+  int height = 4096;
   int centerX = width / 2;
   int centerY = height / 2;
   
   // The number of nodes we're going to plot
   // The number of iterations to run the force sim
   int size = Model.nodeCount;
-  int iterations = 20;
+  int iterations = 250;
   
   // The coordinates and weight of the nodes
   Point points[size];
-  double w[size];
+  HashMap *pointMap = HashMap_new();
   double maxW = 0;
 
   // Init the nodes with random values and appropriate weights
@@ -391,11 +391,14 @@ void Model_drawData(char *filename) {
     // Grab the node
     Node *pNode = Model.nodePointers[i];
     
+    // Encode the point too
+    HashMap_put(pointMap, pNode->id, &points[i]);
+
     // Init the point data
     Point_init(&points[i], 
       Rand_getMaxxed(width) * 1.0,    // x coord 
       Rand_getMaxxed(height) * 1.0,   // y coord
-      pNode->adjNodes->count);  // weight
+      pNode->adjNodes->count);        // weight
     
     // Grab the largest weight
     maxW = maxW < points[i].w ? points[i].w : maxW;
@@ -469,6 +472,30 @@ void Model_drawData(char *filename) {
   color black = Color_fromRGB(0, 0, 0);
   color white = Color_fromRGB(255, 255, 255);
 
+  // Draw the adjacencies
+  for(int i = 0; i < size; i++) {
+
+    // Grab the node
+    Node *pNode = Model.nodePointers[i];
+    char *id = pNode->id;
+
+    // Grab the adjacent nodes
+    for(int j = 0; j < pNode->adjNodes->count; j++) {
+
+      // Grab the adjacent node and its deets
+      char *key = HashMap_getKeys(pNode->adjNodes)[j];
+      Node *pAdj = HashMap_get(Model.nodes, key);
+      char *adjId = pAdj->id;
+
+      // Grab the points
+      Point *p1 = HashMap_get(pointMap, id);
+      Point *p2 = HashMap_get(pointMap, adjId);
+
+      // Draw the line between the points
+      BMP_encodeLine(&bmp, p1->x, p1->y, p2->x, p2->y, white);
+    }
+  }
+
   // Draw the nodes themselves
   for(int i = 0; i < size; i++) {
 
@@ -481,17 +508,16 @@ void Model_drawData(char *filename) {
     if(x - 1 >= 0 && x + 1 < width &&
       y - 1 >= 0 && y + 1 < height) {
       BMP_encodeCircle(&bmp, x, y, w * 16, 
-        Color_lerp(blue, white, w));
+        Color_lerp(blue, red, w));
     }
   }
-
-  BMP_encodeLine(&bmp, centerX, centerY, 200, height, white);
-
-  // Draw the adjacencies
 
   // Write the file
   BMP_writeFile(&bmp, filename);
   BMP_kill(&bmp);
+
+  // Kill the hashmap
+  HashMap_kill(pointMap, 0);
 }
 
 /**
