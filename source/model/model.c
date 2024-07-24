@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-25 03:01:30
+ * @ Modified time: 2024-07-25 03:27:16
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -378,7 +378,7 @@ void Model_drawData(char *filename) {
   // The number of nodes we're going to plot
   // The number of iterations to run the force sim
   int size = Model.nodeCount;
-  int iterations = 1000;
+  int iterations = 100000;
   
   // The coordinates and weight of the nodes
   Point points[size];
@@ -390,15 +390,16 @@ void Model_drawData(char *filename) {
     
     // Grab the node
     Node *pNode = Model.nodePointers[i];
-    
+    int angle = Rand_getMaxxed(360);
+
     // Encode the point too
     HashMap_put(pointMap, pNode->id, &points[i]);
 
     // Init the point data
     Point_init(&points[i], 
-      Rand_getMaxxed(width) * 1.0,    // x coord 
-      Rand_getMaxxed(height) * 1.0,   // y coord
-      pNode->adjNodes->count);        // weight
+      centerX + cos(angle) * width / 2,   // x coord 
+      centerY + sin(angle) * height / 2,  // y coord
+      pNode->adjNodes->count);            // weight
     
     // Grab the largest weight
     maxW = maxW < points[i].w ? points[i].w : maxW;
@@ -406,7 +407,7 @@ void Model_drawData(char *filename) {
 
   // Normalize the weights
   for(int i = 0; i < size; i++) {
-    points[i].w /= maxW * 4;
+    points[i].w /= maxW;
   }
 
   // For each of the simulation iterations
@@ -447,7 +448,7 @@ void Model_drawData(char *filename) {
         // Check if there's a connection
         // If there is, invert the force
         if(HashMap_get(pPointNode->adjNodes, pOtherNode->id) != NULL)
-          mult *= -1;
+          mult *= -4;
 
         // Distance between points
         double distSquarePoint = Point_getDistSquare(pPoint, pOther->x, pOther->y);
@@ -455,8 +456,8 @@ void Model_drawData(char *filename) {
 
         // Add attractive / repuslive force
         Point_addForce(pPoint, 
-          mult * Point_getDistX(pPoint, pOther->x) / distSquarePoint / 1000.0 * pOther->w * pOther->w, 
-          mult * Point_getDistY(pPoint, pOther->y) / distSquarePoint / 1000.0 * pOther->w * pOther->w);
+          mult * Point_getDistX(pPoint, pOther->x) / distSquarePoint / 10000.0 * pOther->w * pOther->w, 
+          mult * Point_getDistY(pPoint, pOther->y) / distSquarePoint / 10000.0 * pOther->w * pOther->w);
       }
     }
 
@@ -495,7 +496,7 @@ void Model_drawData(char *filename) {
       Point *p2 = HashMap_get(pointMap, adjId);
 
       // Draw the line between the points
-      BMP_encodeLine(&bmp, p1->x, p1->y, p2->x, p2->y, white, 0.05);
+      BMP_encodeLine(&bmp, p1->x, p1->y, p2->x, p2->y, white, 0.04);
     }
   }
 
@@ -510,8 +511,8 @@ void Model_drawData(char *filename) {
     // Make sure the point is in bounds
     if(x - 1 >= 0 && x + 1 < width &&
       y - 1 >= 0 && y + 1 < height) {
-      BMP_encodeCircle(&bmp, x, y, w * 25, 
-        Color_lerp(blue, red, w), 0.8);
+      BMP_encodeCircle(&bmp, x, y, w * 80, 
+        Color_lerp(blue, red, w), 1);
     }
   }
 
