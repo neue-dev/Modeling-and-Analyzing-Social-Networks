@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-25 03:27:16
+ * @ Modified time: 2024-07-25 13:36:05
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -372,13 +372,16 @@ void Model_drawData(char *filename) {
   // ! move this elsewhere later
   int width = 4096;
   int height = 4096;
+  int minPointRadius = 2;
+  int maxPointRadius = 10;
+  int minPointBuffer = 20;
   int centerX = width / 2;
   int centerY = height / 2;
   
   // The number of nodes we're going to plot
   // The number of iterations to run the force sim
   int size = Model.nodeCount;
-  int iterations = 100000;
+  int iterations = 60000;
   
   // The coordinates and weight of the nodes
   Point points[size];
@@ -391,14 +394,15 @@ void Model_drawData(char *filename) {
     // Grab the node
     Node *pNode = Model.nodePointers[i];
     int angle = Rand_getMaxxed(360);
+    int radius = (width + height) / 2 / 2;
 
     // Encode the point too
     HashMap_put(pointMap, pNode->id, &points[i]);
 
     // Init the point data
     Point_init(&points[i], 
-      centerX + cos(angle) * width / 2,   // x coord 
-      centerY + sin(angle) * height / 2,  // y coord
+      centerX + cos(angle) * radius,      // x coord 
+      centerY + sin(angle) * radius,      // y coord
       pNode->adjNodes->count);            // weight
     
     // Grab the largest weight
@@ -406,15 +410,14 @@ void Model_drawData(char *filename) {
   }
 
   // Normalize the weights
-  for(int i = 0; i < size; i++) {
+  for(int i = 0; i < size; i++)
     points[i].w /= maxW;
-  }
 
   // For each of the simulation iterations
   for(int i = 0; i < iterations; i++) {
     
     // Progress update
-    printf("%lf%%,", ((double) (i)) / iterations * 100);
+    printf("%lf%%\n,", ((double) (i)) / iterations * 100);
     
     // For each of the nodes
     for(int j = 0; j < size; j++) {
@@ -445,19 +448,23 @@ void Model_drawData(char *filename) {
         if(k == j)
           continue;
 
+        // Distance between points
+        // Threshold represents min distance between connected points before repulsion
+        double distSquarePoint = Point_getDistSquare(pPoint, pOther->x, pOther->y);
+        double distPoint = Point_getDist(pPoint, pOther->x, pOther->y);
+        double threshold = (pPoint->w + pOther->w) * (maxPointRadius + minPointBuffer);
+        double K = 1;
+        distSquarePoint = distSquarePoint < 0.1 ? 0.1 : distSquarePoint;
+        
         // Check if there's a connection
         // If there is, invert the force
         if(HashMap_get(pPointNode->adjNodes, pOtherNode->id) != NULL)
-          mult *= -4;
-
-        // Distance between points
-        double distSquarePoint = Point_getDistSquare(pPoint, pOther->x, pOther->y);
-        distSquarePoint = distSquarePoint < 0.1 ? 0.1 : distSquarePoint;
+          mult *= -(threshold - distPoint) * K;
 
         // Add attractive / repuslive force
         Point_addForce(pPoint, 
-          mult * Point_getDistX(pPoint, pOther->x) / distSquarePoint / 10000.0 * pOther->w * pOther->w, 
-          mult * Point_getDistY(pPoint, pOther->y) / distSquarePoint / 10000.0 * pOther->w * pOther->w);
+          mult * Point_getDistX(pPoint, pOther->x) / distSquarePoint / 25.0 * pOther->w * pOther->w, 
+          mult * Point_getDistY(pPoint, pOther->y) / distSquarePoint / 25.0 * pOther->w * pOther->w);
       }
     }
 
@@ -511,7 +518,9 @@ void Model_drawData(char *filename) {
     // Make sure the point is in bounds
     if(x - 1 >= 0 && x + 1 < width &&
       y - 1 >= 0 && y + 1 < height) {
-      BMP_encodeCircle(&bmp, x, y, w * 80, 
+      BMP_encodeCircle(&bmp, 
+        x, y, 
+        w * (maxPointRadius - minPointRadius) + minPointRadius, 
         Color_lerp(blue, red, w), 1);
     }
   }

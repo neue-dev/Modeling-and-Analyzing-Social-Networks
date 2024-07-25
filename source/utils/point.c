@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-24 22:43:34
- * @ Modified time: 2024-07-25 03:20:08
+ * @ Modified time: 2024-07-25 13:18:36
  * @ Description:
  * 
  * A vector class.
@@ -13,7 +13,8 @@
 
 #include <math.h>
 
-#define POINT_SPEED 8
+#define POINT_SPEED 2.5
+#define POINT_MAX_SPEED 250.0
 
 typedef struct Point Point;
 
@@ -22,6 +23,8 @@ struct Point {
   double y;
   double w;
 
+  double vx;
+  double vy;
   double fx;
   double fy;
 };
@@ -42,6 +45,8 @@ void Point_init(Point *this, double x, double y, double w) {
   this->w = w;
 
   // The forces to apply
+  this->vx = 0;
+  this->vy = 0;
   this->fx = 0;
   this->fy = 0;
 }
@@ -74,8 +79,27 @@ void Point_addForce(Point *this, double fx, double fy) {
  * @param   { Point * }   this  The point to move.
 */
 void Point_move(Point *this) {
-  this->x += this->fx / (this->w < 0.001 ? 0.001 : this->w) * POINT_SPEED;
-  this->y += this->fy / (this->w < 0.001 ? 0.001 : this->w) * POINT_SPEED;
+
+  // Increment velocity
+  this->vx += this->fx / (this->w < 0.001 ? 0.001 : this->w) * POINT_SPEED;
+  this->vy += this->fy / (this->w < 0.001 ? 0.001 : this->w) * POINT_SPEED;
+
+  // If greater than max speed
+  if(this->vx * this->vx + 
+    this->vy * this->vy > 
+    POINT_MAX_SPEED * POINT_MAX_SPEED) {
+    
+    // Compute magnitude of velocity
+    double mag = powf(this->vx * this->vx + this->vy * this->vy, 0.5);
+
+    // Normalize then scale
+    this->vx /= mag / POINT_MAX_SPEED;
+    this->vy /= mag / POINT_MAX_SPEED;
+  }
+
+  // Increment position
+  this->x += this->vx;
+  this->y += this->vy;
 }
 
 /**
