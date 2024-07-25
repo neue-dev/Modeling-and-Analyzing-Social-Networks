@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-24 22:43:34
- * @ Modified time: 2024-07-25 13:18:36
+ * @ Modified time: 2024-07-25 17:27:46
  * @ Description:
  * 
  * A vector class.
@@ -13,8 +13,9 @@
 
 #include <math.h>
 
-#define POINT_SPEED 2.5
-#define POINT_MAX_SPEED 250.0
+#define POINT_SPEED 2.0
+#define POINT_DAMP_FACTOR 0.9
+#define POINT_MAX_SPEED 100.0
 
 typedef struct Point Point;
 
@@ -100,6 +101,10 @@ void Point_move(Point *this) {
   // Increment position
   this->x += this->vx;
   this->y += this->vy;
+
+  // Velocity damping
+  this->vx *= POINT_DAMP_FACTOR;
+  this->vy *= POINT_DAMP_FACTOR;
 }
 
 /**

@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-25 13:36:05
+ * @ Modified time: 2024-07-25 17:25:49
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -372,16 +372,16 @@ void Model_drawData(char *filename) {
   // ! move this elsewhere later
   int width = 4096;
   int height = 4096;
-  int minPointRadius = 2;
-  int maxPointRadius = 10;
-  int minPointBuffer = 20;
+  int minPointRadius = 16;
+  int maxPointRadius = 32;
+  int minPointBuffer = 32;
   int centerX = width / 2;
   int centerY = height / 2;
   
   // The number of nodes we're going to plot
   // The number of iterations to run the force sim
   int size = Model.nodeCount;
-  int iterations = 60000;
+  int iterations = 6000;
   
   // The coordinates and weight of the nodes
   Point points[size];
@@ -433,8 +433,8 @@ void Model_drawData(char *filename) {
       // Compute forces 
       Point_setForce(pPoint, 0, 0);
       Point_addForce(pPoint, 
-        Point_getDistX(pPoint, centerX) / distSquareCenter * 1000.0 * pPoint->w * pPoint->w, 
-        Point_getDistY(pPoint, centerY) / distSquareCenter * 1000.0 * pPoint->w * pPoint->w);
+        Point_getDistX(pPoint, centerX) / distSquareCenter * 2500.0 * pPoint->w * pPoint->w, 
+        Point_getDistY(pPoint, centerY) / distSquareCenter * 2500.0 * pPoint->w * pPoint->w);
 
       // For all the other points
       for(int k = 0; k < size; k++) {
@@ -452,8 +452,9 @@ void Model_drawData(char *filename) {
         // Threshold represents min distance between connected points before repulsion
         double distSquarePoint = Point_getDistSquare(pPoint, pOther->x, pOther->y);
         double distPoint = Point_getDist(pPoint, pOther->x, pOther->y);
-        double threshold = (pPoint->w + pOther->w) * (maxPointRadius + minPointBuffer);
-        double K = 1;
+        double threshold = (pPoint->w + pOther->w) * (maxPointRadius + minPointBuffer) / 2;
+        double K = 5;
+        distPoint = distPoint < 0.1 ? 0.1 : distPoint;
         distSquarePoint = distSquarePoint < 0.1 ? 0.1 : distSquarePoint;
         
         // Check if there's a connection
@@ -463,8 +464,8 @@ void Model_drawData(char *filename) {
 
         // Add attractive / repuslive force
         Point_addForce(pPoint, 
-          mult * Point_getDistX(pPoint, pOther->x) / distSquarePoint / 25.0 * pOther->w * pOther->w, 
-          mult * Point_getDistY(pPoint, pOther->y) / distSquarePoint / 25.0 * pOther->w * pOther->w);
+          mult * Point_getDistX(pPoint, pOther->x) / distSquarePoint / 1000.0 * pOther->w * pOther->w, 
+          mult * Point_getDistY(pPoint, pOther->y) / distSquarePoint / 1000.0 * pOther->w * pOther->w);
       }
     }
 
