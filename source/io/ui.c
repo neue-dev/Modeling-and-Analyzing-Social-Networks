@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 13:45:05
- * @ Modified time: 2024-07-23 19:00:29
+ * @ Modified time: 2024-07-28 23:40:51
  * @ Description:
  * 
  * This has a bunch of utilities for displaying stuff on the screen.
@@ -145,11 +145,11 @@ int UI_response(char *indent) {
   UI_indent(indent);
   
   // Grab the response
-  char response;
-  scanf(" %c", &response);
+  char response[1024];
+  scanf(" %s", response);
   
   // Whether or not the response was a y
-  return response == 'Y' || response == 'y';
+  return response[0] == 'Y' || response[0] == 'y';
 }
 
 #endif

@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-28 13:01:34
+ * @ Modified time: 2024-07-28 23:38:04
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -177,6 +177,30 @@ int Model_generateConnection(Node *pSourceNode, Node *pTargetNode) {
 
   // Return whether or not it succeeded
   return success;
+}
+
+/**
+ * Checks whether or not a filename refers to a valid dataset.
+ * Must end in .txt (that's the only thing it checks).
+ * 
+ * @param   { char * }  filepath  The path to the file.
+ * @return  { int }               Whether or not the filename was valid.
+*/
+int Model_checkValidFile(char *filepath) {
+
+  // The length of the filepath string
+  int l = strlen(filepath);
+
+  // Too short of a filename
+  if(l <= 4)
+    return 0;
+
+  // Just checks if it ends in txt
+  return  
+    filepath[l - 4] == '.' &&
+    filepath[l - 3] == 't' &&
+    filepath[l - 2] == 'x' &&
+    filepath[l - 1] == 't';
 }
 
 /**

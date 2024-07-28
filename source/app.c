@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 18:40:56
- * @ Modified time: 2024-07-28 13:01:01
+ * @ Modified time: 2024-07-28 23:42:16
  * @ Description:
  * 
  * The main flow of the application.
@@ -118,6 +118,22 @@ void App_load() {
   // Print the prompt
   UI_indent(APP_INDENT_INFO); UI_s("Specify a dataset to load."); UI__(); 
   UI_input(APP_INDENT_PROMPT, filepath);
+
+  // Check if the name is valid first
+  if(!Model_checkValidFile(filepath)) {
+    
+    // Print the prompt
+    UI__();
+    UI_indent(APP_INDENT_FAILURE); UI_s("Datasets can only be text files."); UI__();
+    UI_indent(APP_INDENT_SUBINFO); UI_s("Load another dataset? (y/n)"); UI__();
+    
+    // Go to menu if no
+    if(!UI_response(APP_INDENT_PROMPT))
+      App.appState = APPSTATE_MENU;
+
+    // Don't do the rest of the function
+    return;
+  }
 
   // Clear the model first
   UI_indent(APP_INDENT_SUBINFO); UI_s("Clearing previous model data...."); UI__();

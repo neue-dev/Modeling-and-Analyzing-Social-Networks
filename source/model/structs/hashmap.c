@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-16 17:41:28
- * @ Modified time: 2024-07-20 15:59:10
+ * @ Modified time: 2024-07-28 23:27:14
  * @ Description:
  * 
  * Defines a hashmap class.
@@ -19,6 +19,7 @@
 #define HASHMAP_HASH_SEED (0)
 #define HASHMAP_MAX_LOAD (1.1)
 #define HASHMAP_MAX_SIZE (1 << 30)
+#define HASHMAP_MAX_FILL (0.5)
 
 typedef struct HashMap HashMap;
 
@@ -316,7 +317,7 @@ void _HashMap_attemptResizeEntries(HashMap *this) {
   // Even if the entire hashmap fills up, collisons will just start happening
   // That will eventually trigger the loadFactor to go above the max load allowed
   // Also, we only resize if the hashmap is at least half full
-  if(loadFactor > HASHMAP_MAX_LOAD && this->slots >= this->limit * 0.5)
+  if(loadFactor > HASHMAP_MAX_LOAD && this->slots >= this->limit * HASHMAP_MAX_FILL)
     _HashMap_resizeEntries(this);
 }
 
