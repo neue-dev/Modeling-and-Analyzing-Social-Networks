@@ -4,3 +4,6 @@
 **/*.exe
 **/*.o
 **/*.bmp
+
+.DOC.txt
+.TODO.txt

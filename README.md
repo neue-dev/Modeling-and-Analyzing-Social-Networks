@@ -204,7 +204,7 @@ Midway the project, there was a plan to visualize the datasets using [force-dire
 
 Rather than a recommendation: I find it interesting to think about how differently this project would have gone had I decided to stick to Java. In hindsight, there probably exists a faster way to read text files aside from parsing each token one after the other (which is what took so long with Java). If I figured this out early on, I might've had an easier time constructing the `Model` class (as I wouldn't have needed to implement hashmaps, queues, and stacks from the ground up). I could've had more time to visualize the datasets. Alas, it is too late to change this.
 
-Anyway, I do feel grateful having meddled with the implementations of those data structures; it taught me a lot having to build them with nothing but the barest of C tools (although I would like to say that it's not my first time doing this--I had a bit of fun doing that last term!)
+Anyway, I do feel grateful having meddled with the implementations of those data structures; it taught me a lot having to build them with nothing but the barest of C tools (although I would like to say that it wasn't my first time doing this--I had a bit of fun doing that last term!)
 
 # 5 Author
 
@@ -223,3 +223,13 @@ Anyway, I do feel grateful having meddled with the implementations of those data
 
 ### 4.1 Author's Acknowledgements
 
+Note that I cite a number of repositories for the sake of referencing old reused code.
+
+> [1] David, M. (2024), GitHub repository, https://github.com/neuedevv/An-Analysis-of-Sorting-Algorithms/tree/main<br>
+> [2] David, M., Dellosa M. (2024), GitHub repository, https://github.com/neuedevv/Minesweeper-in-C<br>
+> [3] *How to pass variable number of arguments to printf/sprintf*. (n.d.). Stack Overflow. https://stackoverflow.com/questions/1056411/how-to-pass-variable-number-of-arguments-to-printf-sprintf<br>
+> [4] McNulty, L. (n.d.). *Writing BMP Images from Scratch*. https://lmcnulty.me/words/bmp-output/<br>
+> [5] *What is the use of the 'inline' keyword in C?* (n.d.). Stack Overflow. https://stackoverflow.com/questions/31108159/what-is-the-use-of-the-inline-keyword-in-c<br>
+> [6] Wikipedia contributors. (2024, April 15). *Force-directed graph drawing*. Wikipedia. https://en.wikipedia.org/wiki/Force-directed_graph_drawing<br>
+> [7] Wikipedia contributors. (2024a, April 14). *MurmurHash*. Wikipedia. https://en.wikipedia.org/wiki/MurmurHash<br>
+> 
