@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 18:40:56
- * @ Modified time: 2024-07-28 23:42:16
+ * @ Modified time: 2024-07-29 02:28:14
  * @ Description:
  * 
  * The main flow of the application.
@@ -92,11 +92,11 @@ void App_menu() {
   UI__();
   
   // Wait for user input
-  int option = 0;
-  scanf(" %d", &option);
+  char option[1024];
+  scanf(" %s", &option);
   
   // Go to the next page
-  switch(option) {
+  switch(option[0] - 48) {
     case 0: App.appState = APPSTATE_EXIT; break;
     case 1: App.appState = APPSTATE_LOAD; break;
     case 2: App.appState = APPSTATE_FRIENDS; break;
