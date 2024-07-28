@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 18:40:56
- * @ Modified time: 2024-07-29 02:28:14
+ * @ Modified time: 2024-07-29 03:55:23
  * @ Description:
  * 
  * The main flow of the application.
@@ -93,7 +93,7 @@ void App_menu() {
   
   // Wait for user input
   char option[1024];
-  scanf(" %s", &option);
+  scanf(" %s", option);
   
   // Go to the next page
   switch(option[0] - 48) {

@@ -3010,6 +3010,7 @@ body,
 [&gt;  
 
 </code></pre>
+<p>For a more in-depth description of how the algorithm for this portion works, jump to the subsection <em><strong>3.3 Model</strong></em>.</p>
 </blockquote>
 <blockquote>
 <p><b style="color: rgba(255, 155, 55, 1); background-color: rgba(255, 155, 55, 0.16); padding: 4px 8px;">3. Display connections.</b></p>
@@ -3040,6 +3041,7 @@ body,
 [&gt;  
 
 </code></pre>
+<p>For a more in-depth description of how the algorithm for this portion works, jump to the subsection <em><strong>3.3 Model</strong></em>.</p>
 </blockquote>
 <p>Note that for all of the functionalities discussed above, invalid id inputs are handled accordingly (the program alerts the user that one of the node ids were invalid and that they should retry inputting this). The final option <code>0. Exit the app.</code> will no longer be discussed in detail as it should be rather straightforward.</p>
 <h3 id="12-input-formats">1.2 Input Formats</h3>
@@ -3062,16 +3064,183 @@ id_m id_n
 <p>Here, every pair of ids represents a bidirectional connection. The sample data provided for the project enumerated connections twice (for instance, both <code>id_0 id_1</code> and <code>id_1 id_0</code> would be transcribed), but such encoding is unnecessary since the data is stored in an undirected graph. For that reason, the program will gladly accept files that do not repeat connection information in this way.</p>
 <p>Lastly, although the original project specifications were restricted to using integer-based ids, we reiterate that the program can accept any whitespace-free string to refer to ids. After all, the adjacency data and the nodes are stored via hashmaps (to be explained more below).</p>
 <p><img src="file:///d:\modavid\1. Work\0. Coding Projects\2. DLSU\Term-3\Modeling-and-Analyzing-Networks\README\header-components.png" alt="components"></p>
+<p>Note that because the classes in this section are meant to serve as &quot;extensions&quot; of the language, we outline some of the implementation details through their public interfaces. This can serve as a guide for people who wish to use these constructs, although specific implementation details are already sufficiently documented in the source code. Consulting the source code should suffice if any explanations here are lacking.</p>
 <h3 id="21-entry">2.1 Entry</h3>
 <p>To store data within our hashmaps and queues, we will be using an <code>Entry</code> class to represent the individual elements within these constructs. The <code>Entry</code> class stores references to adjacent <code>Entry</code> instances: this is useful because both our hashmaps and queues utilize linked lists to implement their functionalities. The <code>Entry</code> class only acts as a wrapper around our data and should not be thought of as representing the data itself; it only houses a <em>pointer</em> to the actual data we're keeping in memory. By doing that, we have a separation of concerns and can prevent our data structures from becoming coupled to the data we want to model.</p>
+<p>As a reference we show the struct definition of the <code>Entry</code> class and its corresponding public interface (&quot;private&quot; methods are indicated by the prefix &quot;_&quot; in the code, although this is more of a habit adopted by the author rather than an actual way to privatize methods).</p>
+<pre><code class="language-C"><span class="hljs-comment">/**
+ * Represents an entry in the hashmap.
+*/</span>
+<span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">Entry</span> {</span>
+  
+  <span class="hljs-comment">// The id of the entry</span>
+  <span class="hljs-type">char</span> key[ENTRY_KEY_LENGTH + <span class="hljs-number">1</span>];
+
+  <span class="hljs-comment">// The data associated with the entry</span>
+  <span class="hljs-type">void</span> *pData;
+
+  <span class="hljs-comment">// The next entry in the linked list</span>
+  <span class="hljs-comment">// Used to handle collisions in the hashmap</span>
+  <span class="hljs-comment">// Used for implementing queues too</span>
+  Entry *pNext;
+
+  <span class="hljs-comment">// The prev entry in the linked list</span>
+  <span class="hljs-comment">// Useful for the stack</span>
+  Entry *pPrev;
+};
+
+<span class="hljs-comment">/**
+ * The entry interface.
+ */</span>
+
+<span class="hljs-comment">// Allocates memory for a new entry instance</span>
+<span class="hljs-comment">// Inits the associated instance</span>
+Entry *<span class="hljs-title function_">Entry_new</span><span class="hljs-params">(<span class="hljs-type">char</span> *key, <span class="hljs-type">void</span> *pData)</span>;
+
+<span class="hljs-comment">// Cleans up all the memory associated with the entry instance</span>
+<span class="hljs-comment">// If the second option is true, then void *pData is freed too</span>
+<span class="hljs-type">void</span> <span class="hljs-title function_">Entry_kill</span><span class="hljs-params">(Entry *this, <span class="hljs-type">int</span> bShouldFreeData)</span>;
+
+<span class="hljs-comment">// Chains to entry instances together</span>
+<span class="hljs-comment">// This just means that both instances save references to each other</span>
+<span class="hljs-type">void</span> <span class="hljs-title function_">Entry_chain</span><span class="hljs-params">(Entry *pPrev, Entry *pNext)</span>;
+</code></pre>
 <h3 id="22-hash-map">2.2 Hash Map</h3>
 <p>Java has a readily-available implementation of the hashmap that comes part of the language. C, on the other hand, does not offer any form of functionality that comes close to resembling hashmaps. In order to leverage the benefits of using this data structure to index our nodes, manual implementations of hashing and memory allocation were necessary. Our <code>HashMap</code> class defines those procedures for us.</p>
 <p>For the hashing function, <a href="https://en.wikipedia.org/wiki/MurmurHash">murmur hash</a> was chosen as a reasonable algorithm. It presented the perfect balance between complexity and speed for the purposes of the project: the implementation was straightforward enough to construct using C primitives, and the intricacy of the algorithm ensured minimal collisions over a large enough array. Murmur hash also reads its inputs in sequences of four bytes so that each group can be treated as a single unsigned integer; it then performs a series of multiplications (MU) and rotations (R), which lend it the name murmur hash. In the case of this project, the id of the nodes are used to generate the hashes associated with them. Since we are dealing with strings, each group of four adjacent characters are manipulated by the algorithm and the results are accumulated to produce the eventual hash.</p>
 <p>The hash function is only half the story. When implementing hashmaps, collisions are unavoidable, especially for smaller arrays. To deal with these, a linked list can be generated whenever a collision occurs (the linked list is handled by the <code>Entry</code> class mentioned above). Of course, given enough insertions, the linked lists within the hashmap will eventually become too long and can penalize the behavior of the data structure. To remedy this, our <code>HashMap</code> class automatically detects when it must perform resizes: this occurs when the average length of the linked lists exceeds a certain value (for our program, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1.1</mn></mrow><annotation encoding="application/x-tex">1.1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1.1</span></span></span></span>), or when the number of filled slots within the array have exceeded a certain threshold (<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>&gt;</mo><mn>50</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">&gt; 50\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8056em;vertical-align:-0.0556em;"></span><span class="mord">50%</span></span></span></span> of the slots have been filled).</p>
+<p>To facilitate querying all the keys that have been stored within the hashmap, every <code>HashMap</code> instance also stores an array of indexed keys. We simply use our <code>HashMap_getKeys()</code> method to access a reference to this array. Iterating over hashmaps becomes trivial with this implementation.</p>
+<p>As a reference we show the struct definition of the <code>HashMap</code> class and its corresponding public interface. We will not go into the actual implementation, as that would warrant a lengthy discussion.</p>
+<pre><code class="language-C"><span class="hljs-comment">/**
+ * Represents the actual hashmap data structure.
+*/</span>
+<span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">HashMap</span> {</span>
+
+  <span class="hljs-comment">// The contents of the hashmap</span>
+  Entry **entries;
+  <span class="hljs-type">char</span> **keys;
+
+  <span class="hljs-comment">// The number of entries in the hashmap</span>
+  <span class="hljs-type">uint32_t</span> count;
+
+  <span class="hljs-comment">// The number of occupied slots in the hashmap</span>
+  <span class="hljs-comment">// This is different from the number of entries </span>
+  <span class="hljs-comment">// ...because slots with collisions produce linked lists</span>
+  <span class="hljs-type">uint32_t</span> slots; 
+
+  <span class="hljs-comment">// The maximum number of entries held by the hashmap</span>
+  <span class="hljs-comment">// This changes when the hashmap resizes</span>
+  <span class="hljs-type">uint32_t</span> limit;
+  <span class="hljs-type">uint32_t</span> arraySize;
+
+};
+
+<span class="hljs-comment">/**
+ * The hashmap interface.
+ */</span>
+
+<span class="hljs-comment">// Allocates memory for a new hashmap instance</span>
+<span class="hljs-comment">// Inits the associated instance</span>
+HashMap *<span class="hljs-title function_">HashMap_new</span><span class="hljs-params">()</span>;
+
+<span class="hljs-comment">// Deallocates all the memory associated with the hashmap instance</span>
+<span class="hljs-comment">// The second parameter tells the method whether or not to kill the associated references in the entries.</span>
+<span class="hljs-type">void</span> <span class="hljs-title function_">HashMap_kill</span><span class="hljs-params">(HashMap *this, <span class="hljs-type">int</span> bShouldFreeData)</span>;
+
+<span class="hljs-comment">// Puts a new entry into the hashmap with a pointer to the given data</span>
+<span class="hljs-type">int</span> <span class="hljs-title function_">HashMap_put</span><span class="hljs-params">(HashMap *this, <span class="hljs-type">char</span> *key, <span class="hljs-type">void</span> *pData)</span>;
+
+<span class="hljs-comment">// Retrieves the data associated with the given key</span>
+<span class="hljs-comment">// Note that this function is not &quot;void&quot; but &quot;void *&quot;...</span>
+<span class="hljs-comment">// It returns a pointer to the data of the popped element</span>
+<span class="hljs-type">void</span> *<span class="hljs-title function_">HashMap_get</span><span class="hljs-params">(HashMap *this, <span class="hljs-type">char</span> *key)</span>;
+
+<span class="hljs-comment">// Retrieves the array of keys associated with the hash map</span>
+<span class="hljs-type">char</span> **<span class="hljs-title function_">HashMap_getKeys</span><span class="hljs-params">(HashMap *this)</span>;
+
+<span class="hljs-comment">// Returns the number of elements in the hashmap</span>
+<span class="hljs-type">uint32_t</span> <span class="hljs-title function_">HashMap_getCount</span><span class="hljs-params">(HashMap *this)</span>;
+</code></pre>
 <h3 id="23-queue">2.3 Queue</h3>
 <p>The queue is a simpler data structure. To create the <code>Queue</code> class, we only need a pointer to the head and tail <code>Entry</code> instances. The tail allows us to <code>queue()</code> new entries, while the head allows us to <code>dequeue()</code> the entries that have been waiting the longest. The only time we use a queue is when looking for connections between nodes within the dataset. During this procedure, a breadth-first search is conducted. A queue holds the nodes that need to be visited.</p>
+<p>The following represents the queue outline of the queue implementation (again, for specific details on how the queue works, consulting the actual source code should be sufficient, as detailing the implementation here would just be a repetition of the code comments).</p>
+<pre><code class="language-C"><span class="hljs-comment">/**
+ * The queue struct.
+*/</span>
+<span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">Queue</span> {</span>
+
+  <span class="hljs-comment">// Refers to the head and tail of the queue</span>
+  <span class="hljs-comment">// The tail is needed for appending to the queue</span>
+  Entry *pHead;
+  Entry *pTail;
+
+  <span class="hljs-comment">// How many items are in the queue</span>
+  <span class="hljs-type">uint32_t</span> count;
+};
+
+<span class="hljs-comment">/**
+ * The queue interface.
+ */</span>
+
+<span class="hljs-comment">// Allocates memory for a new queue instance</span>
+<span class="hljs-comment">// Inits the new queue instance</span>
+Queue *<span class="hljs-title function_">Queue_new</span><span class="hljs-params">()</span>;
+
+<span class="hljs-comment">// Cleans up the memory associated with a queue</span>
+<span class="hljs-comment">// The second option tells the entries within a queue whether or not to free their data</span>
+<span class="hljs-type">void</span> <span class="hljs-title function_">Queue_kill</span><span class="hljs-params">(Queue *this, <span class="hljs-type">int</span> bShouldFreeData)</span>;
+
+<span class="hljs-comment">// Returns the data head of the queue</span>
+<span class="hljs-type">void</span> *<span class="hljs-title function_">Queue_peek</span><span class="hljs-params">(Queue *this)</span>;
+
+<span class="hljs-comment">// Adds a new entry to the tail of the queue</span>
+<span class="hljs-comment">// Also called enqueue</span>
+<span class="hljs-type">void</span> <span class="hljs-title function_">Queue_add</span><span class="hljs-params">(Queue *this, <span class="hljs-type">void</span> *pData)</span>;
+
+<span class="hljs-comment">// Removes the head of the queue</span>
+<span class="hljs-comment">// Also called dequeue</span>
+<span class="hljs-comment">// Note that this function is not &quot;void&quot; but &quot;void *&quot;...</span>
+<span class="hljs-comment">// It returns a pointer to the data of the popped element</span>
+<span class="hljs-type">void</span> *<span class="hljs-title function_">Queue_remove</span><span class="hljs-params">(Queue *this)</span>;
+
+<span class="hljs-comment">// Returns how many entries are in the queue</span>
+<span class="hljs-type">int</span> <span class="hljs-title function_">Queue_getCount</span><span class="hljs-params">(Queue *this)</span>;
+</code></pre>
 <h3 id="24-stack">2.4 Stack</h3>
-<p>Stacks, like queues, are trivial to implement. The only difference here is that we only need to store a head pointer (no need for a tail pointer since we <code>push()</code> and <code>pop()</code> <code>Entry</code> instances onto the head). Stacks are also only used when looking for connections within our dataset. Because the sequence of nodes produced by our breadth-first search implementation reads the connection in reverse, we use a stack to allow us to print the connection in the right order (from the source node to the target node, instead of vise versa).</p>
+<p>Stacks, like queues, are trivial to implement. The only difference here is that we only need to store a head pointer (no need for a tail pointer since we <code>push()</code> and <code>pop()</code> <code>Entry</code> instances onto the head). Stacks are also only used when looking for connections within our dataset. Because the sequence of nodes produced by our breadth-first search reads the connection in reverse, we use a stack to allow us to print the connection in the right order (from the source node to the target node, instead of vise versa).</p>
+<p>The outline of the stack implementation is presented below.</p>
+<pre><code class="language-C"><span class="hljs-comment">/**
+ * The stack struct.
+ */</span>
+<span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">Stack</span> {</span>
+
+  <span class="hljs-comment">// A pointer to the top of the stack</span>
+  Entry *pTop;
+
+  <span class="hljs-comment">// How many items are in the queue</span>
+  <span class="hljs-type">uint32_t</span> count;
+};
+
+<span class="hljs-comment">/**
+ * The stack interface.  
+*/</span>
+
+<span class="hljs-comment">// Allocates memory for a new stack instance</span>
+<span class="hljs-comment">// Inits the new stack instance</span>
+Stack *<span class="hljs-title function_">Stack_new</span><span class="hljs-params">()</span>;
+
+<span class="hljs-comment">// Cleans up the memory associated with a stack</span>
+<span class="hljs-comment">// The second option tells the entries within a stack whether or not to free their data</span>
+<span class="hljs-type">void</span> <span class="hljs-title function_">Stack_kill</span><span class="hljs-params">(Stack *this, <span class="hljs-type">int</span> bShouldFreeData)</span>;
+
+<span class="hljs-comment">// Adds a new element to the stack with the given data</span>
+<span class="hljs-type">void</span> <span class="hljs-title function_">Stack_push</span><span class="hljs-params">(Stack *this, <span class="hljs-type">void</span> *pData)</span>;
+
+<span class="hljs-comment">// Removes an element to the stack</span>
+<span class="hljs-comment">// Note that this function is not &quot;void&quot; but &quot;void *&quot;...</span>
+<span class="hljs-comment">// It returns a pointer to the data of the popped element</span>
+<span class="hljs-type">void</span> *<span class="hljs-title function_">Stack_pop</span><span class="hljs-params">(Stack *this)</span>;
+</code></pre>
 <p><img src="file:///d:\modavid\1. Work\0. Coding Projects\2. DLSU\Term-3\Modeling-and-Analyzing-Networks\README\header-model-representation.png" alt="model-representation"></p>
 <p>To decouple the model from the components we have, the author created separate classes to represent specific parts of the model defined by the project (social networks). Think of the structures outlined in <em><strong>2. Components</strong></em> as constructs we defined as an extension of the C language, rather than as specific parts of this project. Thus, it makes sense to develop those parts independent of the actual data we want to represent. On the other hand, all the classes outlined in <em><strong>3. Model Representation</strong></em> have methods and properties that behave <em>according to the project specifications</em>.</p>
 <h3 id="31-record">3.1 Record</h3>
@@ -3083,6 +3252,200 @@ id_m id_n
 <h3 id="33-model">3.3 Model</h3>
 <p>To speed up the access of any given node, the model also stores a <code>HashMap</code> that indexes all nodes by their id. That way, any node is accessible in <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="script">O</mi><mo stretchy="false">(</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(1)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathcal" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord">1</span><span class="mclose">)</span></span></span></span> time. The <code>Model</code> class performs all the graph-related logic and operates on the nodes themselves. When we wish to query the friends of a given node, the <code>Model</code> class does this for us. When we wish to find a connection between two given nodes, the <code>Model</code> class also does this for us.</p>
 <p>Ideally, the model class should only deal with the data itself and should not handle any side effects such as printing to the console. However, due to time constraints, a few of the printing functions were delegated to this class. Nevertheless, the author resolved to isolate the printing processes as much as possible from the core functionalities of the <code>Model</code> class.</p>
+<blockquote>
+<p><b style="color: rgba(255, 155, 55, 1); background-color: rgba(255, 155, 55, 0.16); padding: 4px 8px;">2. Display friend list.</b></p>
+<p>This part is a trivial consequence of the way we structured our model. Because every node stores a hashmap with references to all its adjacent nodes, and because every node is indexed by the overarching model in a global hashmap, checking whether or not any node is a friend of any other node can be done in constant time. Likewise, listing all the friends connected to a given node should only take <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="script">O</mi><mo stretchy="false">(</mo><mi>F</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(F)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathcal" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.13889em;">F</span><span class="mclose">)</span></span></span></span>, where <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>F</mi></mrow><annotation encoding="application/x-tex">F</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">F</span></span></span></span> is the number of friends for that given node. The actual code delegated to this task is pasted below as a reference.</p>
+</blockquote>
+<pre><code class="language-C"><span class="hljs-comment">/**
+ * Gets the adjacencies to a particular node.
+ * 
+ * @param   { char * }  id    The id of the node to inspect.
+ * @param   { int }     cols  The number of cols for formatting data.
+*/</span>
+<span class="hljs-type">void</span> <span class="hljs-title function_">Model_printFriendList</span><span class="hljs-params">(<span class="hljs-type">char</span> *id, <span class="hljs-type">int</span> cols)</span> {
+
+  <span class="hljs-comment">// Grab the node we want</span>
+  Node *pNode = HashMap_get(Model.nodes, id);
+
+  <span class="hljs-comment">// The id was invalid</span>
+  <span class="hljs-keyword">if</span>(pNode == <span class="hljs-literal">NULL</span>) {
+    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;\tInvalid id.\n&quot;</span>);
+    <span class="hljs-keyword">return</span>;
+  }
+
+  <span class="hljs-comment">// Grab the adjacencies</span>
+  <span class="hljs-type">char</span> **pNodeAdjs = HashMap_getKeys(pNode-&gt;adjNodes);
+  <span class="hljs-type">int</span> count = HashMap_getCount(pNode-&gt;adjNodes);
+
+  <span class="hljs-comment">// List all the friends of that node</span>
+  <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;\tFriends (%d): \n&quot;</span>, count);
+  
+  <span class="hljs-comment">// Print the adjacencies</span>
+  <span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; count; i++) {
+    
+    <span class="hljs-comment">// Four columns only</span>
+    <span class="hljs-keyword">if</span>(i % cols == <span class="hljs-number">0</span>)
+      <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;\n\t&quot;</span>);
+    
+    <span class="hljs-comment">// Data print</span>
+    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;%s,\t&quot;</span>, pNodeAdjs[i]);
+  }
+
+  <span class="hljs-comment">// Last newline</span>
+  <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;\n&quot;</span>);
+}
+</code></pre>
+<blockquote>
+<p><b style="color: rgba(255, 155, 55, 1); background-color: rgba(255, 155, 55, 0.16); padding: 4px 8px;">3. Display connections.</b></p>
+<p>A little more thought went to this part. To traverse the graph and determine a connection between two nodes, a breadth-first search was implemented. In the worst case, every node in the graph would be visited <em>through each edge of the graph</em>; thus, the algorithm should have a worst-case time complexity of <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="script">O</mi><mo stretchy="false">(</mo><mi>N</mi><mo>+</mo><mi>C</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(N + C)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathcal" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="mclose">)</span></span></span></span>, where <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span> is the total number of nodes in the network, and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>C</mi></mrow><annotation encoding="application/x-tex">C</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span></span></span></span> is the total number of connections. The actual code used to conduct the breadth-first search is outlined below.</p>
+</blockquote>
+<pre><code class="language-C"><span class="hljs-comment">/**
+ * Displays whether or not there&#x27;s a connection between the two nodes.
+ * Prints the appropriate message when none exists, or when one of the nodes are invalid.
+ * 
+ * @param   { char * }  sourceId  The id of the source node.
+ * @param   { char * }  targetId  The id of the target node.
+ * @param   { int }     cols      The number of cols for the formatting.
+*/</span>
+<span class="hljs-type">void</span> <span class="hljs-title function_">Model_printConnection</span><span class="hljs-params">(<span class="hljs-type">char</span> *sourceId, <span class="hljs-type">char</span> *targetId, <span class="hljs-type">int</span> cols)</span> {
+  
+  <span class="hljs-comment">// Grab the nodes we want</span>
+  Node *pSourceNode = HashMap_get(Model.nodes, sourceId);
+  Node *pTargetNode = HashMap_get(Model.nodes, targetId);
+
+  <span class="hljs-comment">// If either id was invalid</span>
+  <span class="hljs-keyword">if</span>(pSourceNode == <span class="hljs-literal">NULL</span> || pTargetNode == <span class="hljs-literal">NULL</span>) {
+    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;\tAt least one of the ids was invalid.\n&quot;</span>);
+    <span class="hljs-keyword">return</span>;
+  }
+
+  <span class="hljs-comment">// Look for a connection</span>
+  <span class="hljs-type">int</span> success = Model_generateConnection(pSourceNode, pTargetNode);   
+
+  <span class="hljs-comment">// No path could be found</span>
+  <span class="hljs-keyword">if</span>(!success) {
+    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;\tA path could not be found.\n&quot;</span>);
+    <span class="hljs-keyword">return</span>;
+  }
+
+  <span class="hljs-comment">// Create a new stack so we can reverse the order</span>
+  Stack *pPathStack = Stack_new();
+  Node *pNode = pTargetNode; 
+
+  <span class="hljs-comment">// Put the nodes unto the stack</span>
+  <span class="hljs-keyword">while</span>(pNode != <span class="hljs-literal">NULL</span>) {
+
+    <span class="hljs-comment">// Push the current node</span>
+    Stack_push(pPathStack, pNode);
+
+    <span class="hljs-comment">// Go to adjacent node</span>
+    pNode = pNode-&gt;pPrevNode;
+  }
+
+  <span class="hljs-comment">// Print that a path was found, reassign pNode to stack top</span>
+  <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;\tThe following path was found.\n\n&quot;</span>);
+  pNode = Stack_pop(pPathStack);
+
+  <span class="hljs-comment">// Very unconverntional for loop</span>
+  <span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; pNode != <span class="hljs-literal">NULL</span>; i++) {
+    
+    <span class="hljs-comment">// Column formatting</span>
+    <span class="hljs-keyword">if</span>(i % cols == <span class="hljs-number">0</span>)
+      <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;\n\t&quot;</span>);
+
+    <span class="hljs-comment">// Print the ids</span>
+    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;=&gt; %s\t&quot;</span>, pNode-&gt;id);
+
+    <span class="hljs-comment">// Go to next in chain</span>
+    pNode = Stack_pop(pPathStack);
+  }
+
+  <span class="hljs-comment">// Cleaner printing</span>
+  <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;\n&quot;</span>);
+
+  <span class="hljs-comment">// Free the memory</span>
+  <span class="hljs-comment">// Don&#x27;t free the data cuz we&#x27;re editing live nodes</span>
+  Stack_kill(pPathStack, <span class="hljs-number">0</span>);
+}
+</code></pre>
+<p>As one might see, the routine above references the function <code>Model_generateConnection()</code> before actually printing the connection (if it was found). The subroutine is also presented below for reference. Thankfully, because of the clean abstractions provided by our queues, stacks, and hashmaps, the implementations for any of these routines tend to be shorter than usual (they don't go over a hundred lines, and half of the lines are comments anyway).</p>
+<pre><code class="language-C"><span class="hljs-comment">/**
+ * &quot;Generates&quot; the connection between two nodes.
+ * By this, we mean that it initializes the &quot;prev&quot; variables of the nodes to the represent a connection between the nodes.
+ * Returns whether or not a connection between the two nodes was found.
+ * 
+ * @param   { Node * }  pSourceNode   The source node of the connection.
+ * @param   { Node * }  pTargetNode   The target node of the connection.
+ * @return  { int }                   Whether or not a connection could be found.
+*/</span>
+<span class="hljs-type">int</span> <span class="hljs-title function_">Model_generateConnection</span><span class="hljs-params">(Node *pSourceNode, Node *pTargetNode)</span> {
+
+  <span class="hljs-comment">// We proceed to traverse the dataset if both nodes were fine</span>
+  Queue *nodeQueue = Queue_new();
+  HashMap *visited = HashMap_new();
+
+  <span class="hljs-comment">// A constant we use to know something has been visited</span>
+  <span class="hljs-type">char</span> *VISITED = <span class="hljs-string">&quot;VISITED&quot;</span>;
+  <span class="hljs-type">int</span> success = <span class="hljs-number">0</span>;
+
+  <span class="hljs-comment">// Push the source node unto the queue</span>
+  Queue_add(nodeQueue, pSourceNode);
+
+  <span class="hljs-comment">// Clear the prev of the node in case it was set in a previous traversal</span>
+  Node_setPrev(pSourceNode, <span class="hljs-literal">NULL</span>);
+
+  <span class="hljs-comment">// While the queue isn&#x27;t empty</span>
+  <span class="hljs-keyword">while</span>(Queue_getCount(nodeQueue) &amp;&amp; !success) {
+
+    <span class="hljs-comment">// Grab the head and its details</span>
+    Node *pHead = Queue_remove(nodeQueue);
+    HashMap *adjNodes = pHead-&gt;adjNodes;
+    
+    <span class="hljs-comment">// Grab the keys we need to iterate over</span>
+    <span class="hljs-type">char</span> **nextNodeKeys = adjNodes-&gt;keys;
+
+    <span class="hljs-comment">// Check if we&#x27;ve reached the destination</span>
+    <span class="hljs-keyword">if</span>(pHead == pTargetNode) {
+      success = <span class="hljs-number">1</span>;
+      <span class="hljs-keyword">break</span>;
+    }
+
+    <span class="hljs-comment">// For each of the adjacent nodes</span>
+    <span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; adjNodes-&gt;count; i++) {
+
+      <span class="hljs-comment">// Grab the key</span>
+      <span class="hljs-type">char</span> *key = nextNodeKeys[i];
+
+      <span class="hljs-comment">// Next node</span>
+      Node *pNextNode = HashMap_get(adjNodes, key);
+
+      <span class="hljs-comment">// Check if visited</span>
+      <span class="hljs-keyword">if</span>(HashMap_get(visited, pNextNode-&gt;id) == VISITED)
+        <span class="hljs-keyword">continue</span>;
+
+      <span class="hljs-comment">// Add the next node to visited</span>
+      HashMap_put(visited, pNextNode-&gt;id, VISITED);
+
+      <span class="hljs-comment">// Set the prev of the node</span>
+      Node_setPrev(pNextNode, pHead);
+
+      <span class="hljs-comment">// Append the node to the queue</span>
+      Queue_add(nodeQueue, pNextNode);
+    }
+
+    <span class="hljs-comment">// Add the head to visited</span>
+    HashMap_put(visited, pHead-&gt;id, VISITED);
+  }
+
+  <span class="hljs-comment">// Garbage collection</span>
+  <span class="hljs-comment">// We&#x27;re only deleting the data structures, so the data itself should be safe</span>
+  HashMap_kill(visited, <span class="hljs-number">0</span>);
+  Queue_kill(nodeQueue, <span class="hljs-number">0</span>);
+
+  <span class="hljs-comment">// Return whether or not it succeeded</span>
+  <span class="hljs-keyword">return</span> success;
+}
+</code></pre>
 <p><img src="file:///d:\modavid\1. Work\0. Coding Projects\2. DLSU\Term-3\Modeling-and-Analyzing-Networks\README\header-reflections-and-recommendations.png" alt="reflections-and-recommendations"></p>
 <h3 id="41-visualizing-the-different-social-networks">4.1 Visualizing the Different Social Networks</h3>
 <p>Midway the project, there was a plan to visualize the datasets using <a href="https://en.wikipedia.org/wiki/Force-directed_graph_drawing">force-directed graphs</a>. As much as the author tried, this seemed to be the only possible solution to constructing an <em>orderly</em> network graph. Although naive implementations of this method have an <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="script">O</mi><mo stretchy="false">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n^3)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0641em;vertical-align:-0.25em;"></span><span class="mord mathcal" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">n</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span> time complexity, <a href="https://en.wikipedia.org/wiki/Force-directed_graph_drawing">the Barnes-Hut algorithm</a> provided an alternative solution with <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="script">O</mi><mo stretchy="false">(</mo><msup><mi>n</mi><mn>2</mn></msup><mi>log</mi><mo>⁡</mo><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n^2 \log n)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0641em;vertical-align:-0.25em;"></span><span class="mord mathcal" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">n</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop">lo<span style="margin-right:0.01389em;">g</span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">n</span><span class="mclose">)</span></span></span></span> time. This solution was attempted (and almost included) in the final submission, but time constraints forbade this from happening. Nevertheless, the author will duly update this repository (even after the submission deadline) if he manages to implement the said functionalities. As of now, it will be left here as a recommendation for others who might want to do this.</p>
@@ -3097,16 +3460,17 @@ id_m id_n
 </code></pre>
 <p><a href="https://github.com/neue-dev">neue-dev</a></p>
 <br />
-<h3 id="41-authors-acknowledgements">4.1 Author's Acknowledgements</h3>
+<h3 id="51-authors-acknowledgements">5.1 Author's Acknowledgements</h3>
 <p>Note that I cite a number of repositories for the sake of referencing old reused code.</p>
 <blockquote>
-<p>[1] David, M. (2024), GitHub repository, <a href="https://github.com/neuedevv/An-Analysis-of-Sorting-Algorithms/tree/main">https://github.com/neuedevv/An-Analysis-of-Sorting-Algorithms/tree/main</a><br>
-[2] David, M., Dellosa M. (2024), GitHub repository, <a href="https://github.com/neuedevv/Minesweeper-in-C">https://github.com/neuedevv/Minesweeper-in-C</a><br>
-[3] <em>How to pass variable number of arguments to printf/sprintf</em>. (n.d.). Stack Overflow. <a href="https://stackoverflow.com/questions/1056411/how-to-pass-variable-number-of-arguments-to-printf-sprintf">https://stackoverflow.com/questions/1056411/how-to-pass-variable-number-of-arguments-to-printf-sprintf</a><br>
-[4] McNulty, L. (n.d.). <em>Writing BMP Images from Scratch</em>. <a href="https://lmcnulty.me/words/bmp-output/">https://lmcnulty.me/words/bmp-output/</a><br>
-[5] <em>What is the use of the 'inline' keyword in C?</em> (n.d.). Stack Overflow. <a href="https://stackoverflow.com/questions/31108159/what-is-the-use-of-the-inline-keyword-in-c">https://stackoverflow.com/questions/31108159/what-is-the-use-of-the-inline-keyword-in-c</a><br>
-[6] Wikipedia contributors. (2024, April 15). <em>Force-directed graph drawing</em>. Wikipedia. <a href="https://en.wikipedia.org/wiki/Force-directed_graph_drawing">https://en.wikipedia.org/wiki/Force-directed_graph_drawing</a><br>
-[7] Wikipedia contributors. (2024a, April 14). <em>MurmurHash</em>. Wikipedia. <a href="https://en.wikipedia.org/wiki/MurmurHash">https://en.wikipedia.org/wiki/MurmurHash</a><br></p>
+<p>[1] <em>Breadth First Search time complexity analysis</em>. (n.d.). Stack Overflow. <a href="https://stackoverflow.com/questions/26549140/breadth-first-search-time-complexity-analysis">https://stackoverflow.com/questions/26549140/breadth-first-search-time-complexity-analysis</a>
+[2] David, M. (2024), GitHub repository, <a href="https://github.com/neuedevv/An-Analysis-of-Sorting-Algorithms/tree/main">https://github.com/neuedevv/An-Analysis-of-Sorting-Algorithms/tree/main</a><br>
+[3] David, M., Dellosa M. (2024), GitHub repository, <a href="https://github.com/neuedevv/Minesweeper-in-C">https://github.com/neuedevv/Minesweeper-in-C</a><br>
+[4] <em>How to pass variable number of arguments to printf/sprintf</em>. (n.d.). Stack Overflow. <a href="https://stackoverflow.com/questions/1056411/how-to-pass-variable-number-of-arguments-to-printf-sprintf">https://stackoverflow.com/questions/1056411/how-to-pass-variable-number-of-arguments-to-printf-sprintf</a><br>
+[5] McNulty, L. (n.d.). <em>Writing BMP Images from Scratch</em>. <a href="https://lmcnulty.me/words/bmp-output/">https://lmcnulty.me/words/bmp-output/</a><br>
+[6] <em>What is the use of the 'inline' keyword in C?</em> (n.d.). Stack Overflow. <a href="https://stackoverflow.com/questions/31108159/what-is-the-use-of-the-inline-keyword-in-c">https://stackoverflow.com/questions/31108159/what-is-the-use-of-the-inline-keyword-in-c</a><br>
+[7] Wikipedia contributors. (2024, April 15). <em>Force-directed graph drawing</em>. Wikipedia. <a href="https://en.wikipedia.org/wiki/Force-directed_graph_drawing">https://en.wikipedia.org/wiki/Force-directed_graph_drawing</a><br>
+[8] Wikipedia contributors. (2024a, April 14). <em>MurmurHash</em>. Wikipedia. <a href="https://en.wikipedia.org/wiki/MurmurHash">https://en.wikipedia.org/wiki/MurmurHash</a><br></p>
 </blockquote>
 </div>
         </div>

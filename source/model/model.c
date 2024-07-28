@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-29 03:09:56
+ * @ Modified time: 2024-07-29 03:45:07
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -49,6 +49,9 @@ void Model_init() {
 
   // No nodes yet
   Model.nodeCount = 0;
+  
+  // Make sure its empty to begin with
+  strcpy(Model.activeDataset, MODEL_EMPTY);
 }
 
 /**
