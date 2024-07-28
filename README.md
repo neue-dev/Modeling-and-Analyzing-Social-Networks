@@ -89,6 +89,8 @@ On Windows, the commands would look slightly different (because instead of `/`, 
 >[>  
 >
 >```
+>
+> For a more in-depth description of how the algorithm for this portion works, jump to the subsection ***3.3 Model***.
 
 > <b style="color: rgba(255, 155, 55, 1); background-color: rgba(255, 155, 55, 0.16); padding: 4px 8px;">3. Display connections.</b>
 >
@@ -122,6 +124,8 @@ On Windows, the commands would look slightly different (because instead of `/`, 
 >[>  
 >
 >```
+>
+> For a more in-depth description of how the algorithm for this portion works, jump to the subsection ***3.3 Model***.
 
 Note that for all of the functionalities discussed above, invalid id inputs are handled accordingly (the program alerts the user that one of the node ids were invalid and that they should retry inputting this). The final option `0. Exit the app.` will no longer be discussed in detail as it should be rather straightforward.
 
@@ -152,9 +156,52 @@ Lastly, although the original project specifications were restricted to using in
 
 ![components](./README/header-components.png)
 
+Note that because the classes in this section are meant to serve as "extensions" of the language, we outline some of the implementation details through their public interfaces. This can serve as a guide for people who wish to use these constructs, although specific implementation details are already sufficiently documented in the source code. Consulting the source code should suffice if any explanations here are lacking.
+
 ### 2.1 Entry
 
 To store data within our hashmaps and queues, we will be using an `Entry` class to represent the individual elements within these constructs. The `Entry` class stores references to adjacent `Entry` instances: this is useful because both our hashmaps and queues utilize linked lists to implement their functionalities. The `Entry` class only acts as a wrapper around our data and should not be thought of as representing the data itself; it only houses a *pointer* to the actual data we're keeping in memory. By doing that, we have a separation of concerns and can prevent our data structures from becoming coupled to the data we want to model.
+
+As a reference we show the struct definition of the `Entry` class and its corresponding public interface ("private" methods are indicated by the prefix "_" in the code, although this is more of a habit adopted by the author rather than an actual way to privatize methods).
+
+```C
+/**
+ * Represents an entry in the hashmap.
+*/
+struct Entry {
+  
+  // The id of the entry
+  char key[ENTRY_KEY_LENGTH + 1];
+
+  // The data associated with the entry
+  void *pData;
+
+  // The next entry in the linked list
+  // Used to handle collisions in the hashmap
+  // Used for implementing queues too
+  Entry *pNext;
+
+  // The prev entry in the linked list
+  // Useful for the stack
+  Entry *pPrev;
+};
+
+/**
+ * The entry interface.
+ */
+
+// Allocates memory for a new entry instance
+// Inits the associated instance
+Entry *Entry_new(char *key, void *pData);
+
+// Cleans up all the memory associated with the entry instance
+// If the second option is true, then void *pData is freed too
+void Entry_kill(Entry *this, int bShouldFreeData);
+
+// Chains to entry instances together
+// This just means that both instances save references to each other
+void Entry_chain(Entry *pPrev, Entry *pNext);
+```
 
 ### 2.2 Hash Map
 
@@ -164,13 +211,151 @@ For the hashing function, [murmur hash](https://en.wikipedia.org/wiki/MurmurHash
 
 The hash function is only half the story. When implementing hashmaps, collisions are unavoidable, especially for smaller arrays. To deal with these, a linked list can be generated whenever a collision occurs (the linked list is handled by the `Entry` class mentioned above). Of course, given enough insertions, the linked lists within the hashmap will eventually become too long and can penalize the behavior of the data structure. To remedy this, our `HashMap` class automatically detects when it must perform resizes: this occurs when the average length of the linked lists exceeds a certain value (for our program, $1.1$), or when the number of filled slots within the array have exceeded a certain threshold ($> 50\%$ of the slots have been filled).
 
+To facilitate querying all the keys that have been stored within the hashmap, every `HashMap` instance also stores an array of indexed keys. We simply use our `HashMap_getKeys()` method to access a reference to this array. Iterating over hashmaps becomes trivial with this implementation.
+
+As a reference we show the struct definition of the `HashMap` class and its corresponding public interface. We will not go into the actual implementation, as that would warrant a lengthy discussion. 
+
+```C
+/**
+ * Represents the actual hashmap data structure.
+*/
+struct HashMap {
+
+  // The contents of the hashmap
+  Entry **entries;
+  char **keys;
+
+  // The number of entries in the hashmap
+  uint32_t count;
+
+  // The number of occupied slots in the hashmap
+  // This is different from the number of entries 
+  // ...because slots with collisions produce linked lists
+  uint32_t slots; 
+
+  // The maximum number of entries held by the hashmap
+  // This changes when the hashmap resizes
+  uint32_t limit;
+  uint32_t arraySize;
+
+};
+
+/**
+ * The hashmap interface.
+ */
+
+// Allocates memory for a new hashmap instance
+// Inits the associated instance
+HashMap *HashMap_new();
+
+// Deallocates all the memory associated with the hashmap instance
+// The second parameter tells the method whether or not to kill the associated references in the entries.
+void HashMap_kill(HashMap *this, int bShouldFreeData);
+
+// Puts a new entry into the hashmap with a pointer to the given data
+int HashMap_put(HashMap *this, char *key, void *pData);
+
+// Retrieves the data associated with the given key
+// Note that this function is not "void" but "void *"...
+// It returns a pointer to the data of the popped element
+void *HashMap_get(HashMap *this, char *key);
+
+// Retrieves the array of keys associated with the hash map
+char **HashMap_getKeys(HashMap *this);
+
+// Returns the number of elements in the hashmap
+uint32_t HashMap_getCount(HashMap *this);
+```
+
 ### 2.3 Queue
 
 The queue is a simpler data structure. To create the `Queue` class, we only need a pointer to the head and tail `Entry` instances. The tail allows us to `queue()` new entries, while the head allows us to `dequeue()` the entries that have been waiting the longest. The only time we use a queue is when looking for connections between nodes within the dataset. During this procedure, a breadth-first search is conducted. A queue holds the nodes that need to be visited.
 
+The following represents the queue outline of the queue implementation (again, for specific details on how the queue works, consulting the actual source code should be sufficient, as detailing the implementation here would just be a repetition of the code comments).
+
+```C
+/**
+ * The queue struct.
+*/
+struct Queue {
+
+  // Refers to the head and tail of the queue
+  // The tail is needed for appending to the queue
+  Entry *pHead;
+  Entry *pTail;
+
+  // How many items are in the queue
+  uint32_t count;
+};
+
+/**
+ * The queue interface.
+ */
+
+// Allocates memory for a new queue instance
+// Inits the new queue instance
+Queue *Queue_new();
+
+// Cleans up the memory associated with a queue
+// The second option tells the entries within a queue whether or not to free their data
+void Queue_kill(Queue *this, int bShouldFreeData);
+
+// Returns the data head of the queue
+void *Queue_peek(Queue *this);
+
+// Adds a new entry to the tail of the queue
+// Also called enqueue
+void Queue_add(Queue *this, void *pData);
+
+// Removes the head of the queue
+// Also called dequeue
+// Note that this function is not "void" but "void *"...
+// It returns a pointer to the data of the popped element
+void *Queue_remove(Queue *this);
+
+// Returns how many entries are in the queue
+int Queue_getCount(Queue *this);
+```
+
 ### 2.4 Stack
 
-Stacks, like queues, are trivial to implement. The only difference here is that we only need to store a head pointer (no need for a tail pointer since we `push()` and `pop()` `Entry` instances onto the head). Stacks are also only used when looking for connections within our dataset. Because the sequence of nodes produced by our breadth-first search implementation reads the connection in reverse, we use a stack to allow us to print the connection in the right order (from the source node to the target node, instead of vise versa).
+Stacks, like queues, are trivial to implement. The only difference here is that we only need to store a head pointer (no need for a tail pointer since we `push()` and `pop()` `Entry` instances onto the head). Stacks are also only used when looking for connections within our dataset. Because the sequence of nodes produced by our breadth-first search reads the connection in reverse, we use a stack to allow us to print the connection in the right order (from the source node to the target node, instead of vise versa).
+
+The outline of the stack implementation is presented below.
+
+```C
+/**
+ * The stack struct.
+ */
+struct Stack {
+
+  // A pointer to the top of the stack
+  Entry *pTop;
+
+  // How many items are in the queue
+  uint32_t count;
+};
+
+/**
+ * The stack interface.  
+*/
+
+// Allocates memory for a new stack instance
+// Inits the new stack instance
+Stack *Stack_new();
+
+// Cleans up the memory associated with a stack
+// The second option tells the entries within a stack whether or not to free their data
+void Stack_kill(Stack *this, int bShouldFreeData);
+
+// Adds a new element to the stack with the given data
+void Stack_push(Stack *this, void *pData);
+
+// Removes an element to the stack
+// Note that this function is not "void" but "void *"...
+// It returns a pointer to the data of the popped element
+void *Stack_pop(Stack *this);
+```
 
 ![model-representation](./README/header-model-representation.png)
 
@@ -193,6 +378,207 @@ By doing this, the `Node` class allows us to model the graph of our social netwo
 To speed up the access of any given node, the model also stores a `HashMap` that indexes all nodes by their id. That way, any node is accessible in $\mathcal{O}(1)$ time. The `Model` class performs all the graph-related logic and operates on the nodes themselves. When we wish to query the friends of a given node, the `Model` class does this for us. When we wish to find a connection between two given nodes, the `Model` class also does this for us.
 
 Ideally, the model class should only deal with the data itself and should not handle any side effects such as printing to the console. However, due to time constraints, a few of the printing functions were delegated to this class. Nevertheless, the author resolved to isolate the printing processes as much as possible from the core functionalities of the `Model` class. 
+
+> <b style="color: rgba(255, 155, 55, 1); background-color: rgba(255, 155, 55, 0.16); padding: 4px 8px;">2. Display friend list.</b>
+>
+> This part is a trivial consequence of the way we structured our model. Because every node stores a hashmap with references to all its adjacent nodes, and because every node is indexed by the overarching model in a global hashmap, checking whether or not any node is a friend of any other node can be done in constant time. Likewise, listing all the friends connected to a given node should only take $\mathcal{O}(F)$, where $F$ is the number of friends for that given node. The actual code delegated to this task is pasted below as a reference.
+>
+```C
+/**
+ * Gets the adjacencies to a particular node.
+ * 
+ * @param   { char * }  id    The id of the node to inspect.
+ * @param   { int }     cols  The number of cols for formatting data.
+*/
+void Model_printFriendList(char *id, int cols) {
+
+  // Grab the node we want
+  Node *pNode = HashMap_get(Model.nodes, id);
+
+  // The id was invalid
+  if(pNode == NULL) {
+    printf("\tInvalid id.\n");
+    return;
+  }
+
+  // Grab the adjacencies
+  char **pNodeAdjs = HashMap_getKeys(pNode->adjNodes);
+  int count = HashMap_getCount(pNode->adjNodes);
+
+  // List all the friends of that node
+  printf("\tFriends (%d): \n", count);
+  
+  // Print the adjacencies
+  for(int i = 0; i < count; i++) {
+    
+    // Four columns only
+    if(i % cols == 0)
+      printf("\n\t");
+    
+    // Data print
+    printf("%s,\t", pNodeAdjs[i]);
+  }
+
+  // Last newline
+  printf("\n");
+}
+```
+
+> <b style="color: rgba(255, 155, 55, 1); background-color: rgba(255, 155, 55, 0.16); padding: 4px 8px;">3. Display connections.</b>
+>
+> A little more thought went to this part. To traverse the graph and determine a connection between two nodes, a breadth-first search was implemented. In the worst case, every node in the graph would be visited *through each edge of the graph*; thus, the algorithm should have a worst-case time complexity of $\mathcal{O}(N + C)$, where $N$ is the total number of nodes in the network, and $C$ is the total number of connections. The actual code used to conduct the breadth-first search is outlined below.
+>
+```C
+/**
+ * Displays whether or not there's a connection between the two nodes.
+ * Prints the appropriate message when none exists, or when one of the nodes are invalid.
+ * 
+ * @param   { char * }  sourceId  The id of the source node.
+ * @param   { char * }  targetId  The id of the target node.
+ * @param   { int }     cols      The number of cols for the formatting.
+*/
+void Model_printConnection(char *sourceId, char *targetId, int cols) {
+  
+  // Grab the nodes we want
+  Node *pSourceNode = HashMap_get(Model.nodes, sourceId);
+  Node *pTargetNode = HashMap_get(Model.nodes, targetId);
+
+  // If either id was invalid
+  if(pSourceNode == NULL || pTargetNode == NULL) {
+    printf("\tAt least one of the ids was invalid.\n");
+    return;
+  }
+
+  // Look for a connection
+  int success = Model_generateConnection(pSourceNode, pTargetNode);   
+
+  // No path could be found
+  if(!success) {
+    printf("\tA path could not be found.\n");
+    return;
+  }
+
+  // Create a new stack so we can reverse the order
+  Stack *pPathStack = Stack_new();
+  Node *pNode = pTargetNode; 
+
+  // Put the nodes unto the stack
+  while(pNode != NULL) {
+
+    // Push the current node
+    Stack_push(pPathStack, pNode);
+
+    // Go to adjacent node
+    pNode = pNode->pPrevNode;
+  }
+
+  // Print that a path was found, reassign pNode to stack top
+  printf("\tThe following path was found.\n\n");
+  pNode = Stack_pop(pPathStack);
+
+  // Very unconverntional for loop
+  for(int i = 0; pNode != NULL; i++) {
+    
+    // Column formatting
+    if(i % cols == 0)
+      printf("\n\t");
+
+    // Print the ids
+    printf("=> %s\t", pNode->id);
+
+    // Go to next in chain
+    pNode = Stack_pop(pPathStack);
+  }
+
+  // Cleaner printing
+  printf("\n");
+
+  // Free the memory
+  // Don't free the data cuz we're editing live nodes
+  Stack_kill(pPathStack, 0);
+}
+```
+
+As one might see, the routine above references the function `Model_generateConnection()` before actually printing the connection (if it was found). The subroutine is also presented below for reference. Thankfully, because of the clean abstractions provided by our queues, stacks, and hashmaps, the implementations for any of these routines tend to be shorter than usual (they don't go over a hundred lines, and half of the lines are comments anyway).
+
+```C
+/**
+ * "Generates" the connection between two nodes.
+ * By this, we mean that it initializes the "prev" variables of the nodes to the represent a connection between the nodes.
+ * Returns whether or not a connection between the two nodes was found.
+ * 
+ * @param   { Node * }  pSourceNode   The source node of the connection.
+ * @param   { Node * }  pTargetNode   The target node of the connection.
+ * @return  { int }                   Whether or not a connection could be found.
+*/
+int Model_generateConnection(Node *pSourceNode, Node *pTargetNode) {
+
+  // We proceed to traverse the dataset if both nodes were fine
+  Queue *nodeQueue = Queue_new();
+  HashMap *visited = HashMap_new();
+
+  // A constant we use to know something has been visited
+  char *VISITED = "VISITED";
+  int success = 0;
+
+  // Push the source node unto the queue
+  Queue_add(nodeQueue, pSourceNode);
+
+  // Clear the prev of the node in case it was set in a previous traversal
+  Node_setPrev(pSourceNode, NULL);
+
+  // While the queue isn't empty
+  while(Queue_getCount(nodeQueue) && !success) {
+
+    // Grab the head and its details
+    Node *pHead = Queue_remove(nodeQueue);
+    HashMap *adjNodes = pHead->adjNodes;
+    
+    // Grab the keys we need to iterate over
+    char **nextNodeKeys = adjNodes->keys;
+
+    // Check if we've reached the destination
+    if(pHead == pTargetNode) {
+      success = 1;
+      break;
+    }
+
+    // For each of the adjacent nodes
+    for(int i = 0; i < adjNodes->count; i++) {
+
+      // Grab the key
+      char *key = nextNodeKeys[i];
+
+      // Next node
+      Node *pNextNode = HashMap_get(adjNodes, key);
+
+      // Check if visited
+      if(HashMap_get(visited, pNextNode->id) == VISITED)
+        continue;
+
+      // Add the next node to visited
+      HashMap_put(visited, pNextNode->id, VISITED);
+
+      // Set the prev of the node
+      Node_setPrev(pNextNode, pHead);
+
+      // Append the node to the queue
+      Queue_add(nodeQueue, pNextNode);
+    }
+
+    // Add the head to visited
+    HashMap_put(visited, pHead->id, VISITED);
+  }
+
+  // Garbage collection
+  // We're only deleting the data structures, so the data itself should be safe
+  HashMap_kill(visited, 0);
+  Queue_kill(nodeQueue, 0);
+
+  // Return whether or not it succeeded
+  return success;
+}
+```
 
 ![reflections-and-recommendations](./README/header-reflections-and-recommendations.png)
 
@@ -219,15 +605,16 @@ Anyway, I do feel grateful having meddled with the implementations of those data
 
 <br />
 
-### 4.1 Author's Acknowledgements
+### 5.1 Author's Acknowledgements
 
 Note that I cite a number of repositories for the sake of referencing old reused code.
 
-> [1] David, M. (2024), GitHub repository, https://github.com/neuedevv/An-Analysis-of-Sorting-Algorithms/tree/main<br>
-> [2] David, M., Dellosa M. (2024), GitHub repository, https://github.com/neuedevv/Minesweeper-in-C<br>
-> [3] *How to pass variable number of arguments to printf/sprintf*. (n.d.). Stack Overflow. https://stackoverflow.com/questions/1056411/how-to-pass-variable-number-of-arguments-to-printf-sprintf<br>
-> [4] McNulty, L. (n.d.). *Writing BMP Images from Scratch*. https://lmcnulty.me/words/bmp-output/<br>
-> [5] *What is the use of the 'inline' keyword in C?* (n.d.). Stack Overflow. https://stackoverflow.com/questions/31108159/what-is-the-use-of-the-inline-keyword-in-c<br>
-> [6] Wikipedia contributors. (2024, April 15). *Force-directed graph drawing*. Wikipedia. https://en.wikipedia.org/wiki/Force-directed_graph_drawing<br>
-> [7] Wikipedia contributors. (2024a, April 14). *MurmurHash*. Wikipedia. https://en.wikipedia.org/wiki/MurmurHash<br>
+> [1] *Breadth First Search time complexity analysis*. (n.d.). Stack Overflow. https://stackoverflow.com/questions/26549140/breadth-first-search-time-complexity-analysis
+> [2] David, M. (2024), GitHub repository, https://github.com/neuedevv/An-Analysis-of-Sorting-Algorithms/tree/main<br>
+> [3] David, M., Dellosa M. (2024), GitHub repository, https://github.com/neuedevv/Minesweeper-in-C<br>
+> [4] *How to pass variable number of arguments to printf/sprintf*. (n.d.). Stack Overflow. https://stackoverflow.com/questions/1056411/how-to-pass-variable-number-of-arguments-to-printf-sprintf<br>
+> [5] McNulty, L. (n.d.). *Writing BMP Images from Scratch*. https://lmcnulty.me/words/bmp-output/<br>
+> [6] *What is the use of the 'inline' keyword in C?* (n.d.). Stack Overflow. https://stackoverflow.com/questions/31108159/what-is-the-use-of-the-inline-keyword-in-c<br>
+> [7] Wikipedia contributors. (2024, April 15). *Force-directed graph drawing*. Wikipedia. https://en.wikipedia.org/wiki/Force-directed_graph_drawing<br>
+> [8] Wikipedia contributors. (2024a, April 14). *MurmurHash*. Wikipedia. https://en.wikipedia.org/wiki/MurmurHash<br>
 > 
