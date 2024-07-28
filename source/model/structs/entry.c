@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 13:49:08
- * @ Modified time: 2024-07-22 23:46:15
+ * @ Modified time: 2024-07-29 02:50:05
  * @ Description:
  * 
  * An entry we use for both hashmaps and queues.
@@ -44,7 +44,7 @@ Entry *_Entry_init(Entry *this, char *key, void *pData);
 Entry *Entry_new(char *key, void *pData);
 void Entry_kill(Entry *this, int bShouldFreeData);
 
-void Entry_chain(Entry *this, Entry *pNext);
+void Entry_chain(Entry *pPrev, Entry *pNext);
 
 /**
  * Allocates space for a new entry instance.

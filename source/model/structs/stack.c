@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-22 23:08:40
- * @ Modified time: 2024-07-22 23:33:34
+ * @ Modified time: 2024-07-29 03:01:31
  * @ Description:
  * 
  * Our stack implementation.
@@ -16,6 +16,9 @@
 
 typedef struct Stack Stack;
 
+/**
+ * The stack struct.
+ */
 struct Stack {
 
   // A pointer to the top of the stack
@@ -24,6 +27,17 @@ struct Stack {
   // How many items are in the queue
   uint32_t count;
 };
+
+/**
+ * The stack interface.  
+*/
+Stack *_Stack_allow();
+Stack *_Stack_init(Stack *this);
+Stack *Stack_new();
+void Stack_kill(Stack *this, int bShouldFreeData);
+
+void Stack_push(Stack *this, void *pData);
+void *Stack_pop(Stack *this);
 
 /**
  * Allocates memory for a new stack instance.

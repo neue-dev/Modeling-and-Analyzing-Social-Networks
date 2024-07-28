@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 10:37:54
- * @ Modified time: 2024-07-28 23:38:04
+ * @ Modified time: 2024-07-29 03:09:56
  * @ Description:
  * 
  * Handles converting the data into the model within memory.
@@ -220,7 +220,7 @@ void Model_printFriendList(char *id, int cols) {
     return;
   }
 
-  // Grab the details of the adjacency
+  // Grab the adjacencies
   char **pNodeAdjs = HashMap_getKeys(pNode->adjNodes);
   int count = HashMap_getCount(pNode->adjNodes);
 

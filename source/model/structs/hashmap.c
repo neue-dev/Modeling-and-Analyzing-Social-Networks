@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-16 17:41:28
- * @ Modified time: 2024-07-28 23:27:14
+ * @ Modified time: 2024-07-29 02:49:50
  * @ Description:
  * 
  * Defines a hashmap class.
@@ -50,15 +50,21 @@ struct HashMap {
 /**
  * The hashmap interface.
  */
-HashMap *HashMap_alloc();
-HashMap *HashMap_init(HashMap *this);
+HashMap *_HashMap_alloc();
+HashMap *_HashMap_init(HashMap *this);
 HashMap *HashMap_new();
 void HashMap_kill(HashMap *this, int bShouldFreeData);
 
 void _HashMap_attemptResizeEntries(HashMap *this);
+void _HashMap_attemptResizeKeys(HashMap *this);
+
 int _HashMap_put(HashMap *this, Entry *pEntry);
 int HashMap_put(HashMap *this, char *key, void *pData);
+void _HashMap_putKey(HashMap *this, char *key);
+
 void *HashMap_get(HashMap *this, char *key);
+char **HashMap_getKeys(HashMap *this);
+uint32_t HashMap_getCount(HashMap *this);
 
 /**
  * This just jumbles of the value of k and is an arbitrary formula.

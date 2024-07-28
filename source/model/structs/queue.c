@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 13:47:39
- * @ Modified time: 2024-07-22 23:09:50
+ * @ Modified time: 2024-07-29 02:56:26
  * @ Description:
  * 
  * A queue data structure which comes in handy for traversing our data.
@@ -15,6 +15,9 @@
 
 typedef struct Queue Queue;
 
+/**
+ * The queue struct.
+*/
 struct Queue {
 
   // Refers to the head and tail of the queue
@@ -25,6 +28,19 @@ struct Queue {
   // How many items are in the queue
   uint32_t count;
 };
+
+/**
+ * The queue interface.
+ */
+Queue *_Queue_alloc();
+Queue *_Queue_init(Queue *this);
+Queue *Queue_new();
+void Queue_kill(Queue *this, int bShouldFreeData);
+
+void *Queue_peek(Queue *this);
+void Queue_add(Queue *this, void *pData);
+void *Queue_remove(Queue *this);
+int Queue_getCount(Queue *this);
 
 /**
  * Allocates memory for a new queue.
