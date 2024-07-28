@@ -1,7 +1,5 @@
-! reverse the path finding 
-! disallow other actions when no active dataset is present
 ! TEST ON WINDOWS
-! fix hashmap resizing, bug happens when initial size is 1 << 4
+! fix hashmap resizing, bug happens when initial size is 1 << 4 ??
 ! make sure inputting folder doesn't work ('./data' produces bug)
 
 NEEDED:
