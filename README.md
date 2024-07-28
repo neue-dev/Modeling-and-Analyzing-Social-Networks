@@ -194,7 +194,7 @@ To speed up the access of any given node, the model also stores a `HashMap` that
 
 Ideally, the model class should only deal with the data itself and should not handle any side effects such as printing to the console. However, due to time constraints, a few of the printing functions were delegated to this class. Nevertheless, the author resolved to isolate the printing processes as much as possible from the core functionalities of the `Model` class. 
 
-# 4 Reflections, Recommendations
+![reflections-and-recommendations](./README/header-reflections-and-recommendations.png)
 
 ### 4.1 Visualizing the Different Social Networks
 
@@ -205,8 +205,6 @@ Midway the project, there was a plan to visualize the datasets using [force-dire
 Rather than a recommendation: I find it interesting to think about how differently this project would have gone had I decided to stick to Java. In hindsight, there probably exists a faster way to read text files aside from parsing each token one after the other (which is what took so long with Java). If I figured this out early on, I might've had an easier time constructing the `Model` class (as I wouldn't have needed to implement hashmaps, queues, and stacks from the ground up). I could've had more time to visualize the datasets. Alas, it is too late to change this.
 
 Anyway, I do feel grateful having meddled with the implementations of those data structures; it taught me a lot having to build them with nothing but the barest of C tools (although I would like to say that it wasn't my first time doing this--I had a bit of fun doing that last term!)
-
-# 5 Author
 
 ![author](./README/header-author.png)
 ---
