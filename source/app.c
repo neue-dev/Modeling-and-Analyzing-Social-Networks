@@ -1,7 +1,7 @@
 /**
  * @ Author: Mo David
  * @ Create Time: 2024-07-19 18:40:56
- * @ Modified time: 2024-07-25 10:54:50
+ * @ Modified time: 2024-07-28 13:01:01
  * @ Description:
  * 
  * The main flow of the application.
@@ -81,9 +81,6 @@ void App_init() {
  * Show the main menu.
 */
 void App_menu() {
-
-  // ! remove
-  Model_drawData("debug.bmp");
 
   // Print the options
   UI_indent(APP_INDENT_INFO); UI_s("Select what to do next."); UI__();
