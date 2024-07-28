@@ -152,43 +152,59 @@ Lastly, although the original project specifications were restricted to using in
 
 ![components](./README/header-components.png)
 
-### 2.1 Hash Map
+### 2.1 Entry
 
-Java has a readily-available implementation of the hashmap that comes part of the language. C, on the other hand, does not offer any form of functionality that comes close to resembling hashmaps. In order to leverage the benefits of using this data structure to index our nodes, manual implementations of hashing and memory allocation were necessary. 
+To store data within our hashmaps and queues, we will be using an `Entry` class to represent the individual elements within these constructs. The `Entry` class stores references to adjacent `Entry` instances: this is useful because both our hashmaps and queues utilize linked lists to implement their functionalities. The `Entry` class only acts as a wrapper around our data and should not be thought of as representing the data itself; it only houses a *pointer* to the actual data we're keeping in memory. By doing that, we have a separation of concerns and can prevent our data structures from becoming coupled to the data we want to model.
 
-For the hashing function, [murmur hash](https://en.wikipedia.org/wiki/MurmurHash) was chosen as a reasonable algorithm. It presented the perfect balance between complexity and speed for the purposes of the project: the implementation was straightforward enough to construct using C primitives, and the intricacy of the algorithm ensured minimal collisions over a large enough array. Murmur hash also reads its inputs in sequences of four bytes so that each group can be treated as a single unsigned integer; it then operates a series of multiplications (MU) and rotations (R), which lend it the name murmur hash. In the case of this project, the id of the nodes are used to generate the hashes associated with them. Since these are strings, each group of four adjacent characters are manipulated by the algorithm and the results are accumulated to produce the eventual hash.
+### 2.2 Hash Map
 
-The hash function is only half the story. When creating hashmaps, collisions are unavoidable, especially for smaller arrays. To deal with these, a linked list can be generated whenever a collision occurs to allow storing nodes that result in the same hash (the linked list is handled by creating a struct that has references to the nodes before and after it). Of course, given enough insertions, the linked lists within the hashmap will eventually become too long and can penalize the behavior of the data structure. To remedy this, the hashmap automatically detects when it must perform resizes: when the average length of the linked lists exceeds a certain value (for our program, $1.1$), or when the number of filled slots within the array have exceeded a certain threshold ($> 50\%$ of the slots have been filled).  
+Java has a readily-available implementation of the hashmap that comes part of the language. C, on the other hand, does not offer any form of functionality that comes close to resembling hashmaps. In order to leverage the benefits of using this data structure to index our nodes, manual implementations of hashing and memory allocation were necessary. Our `HashMap` class defines those procedures for us.
 
-### 2.2 Queue
+For the hashing function, [murmur hash](https://en.wikipedia.org/wiki/MurmurHash) was chosen as a reasonable algorithm. It presented the perfect balance between complexity and speed for the purposes of the project: the implementation was straightforward enough to construct using C primitives, and the intricacy of the algorithm ensured minimal collisions over a large enough array. Murmur hash also reads its inputs in sequences of four bytes so that each group can be treated as a single unsigned integer; it then performs a series of multiplications (MU) and rotations (R), which lend it the name murmur hash. In the case of this project, the id of the nodes are used to generate the hashes associated with them. Since we are dealing with strings, each group of four adjacent characters are manipulated by the algorithm and the results are accumulated to produce the eventual hash.
 
-### 2.3 Stack
+The hash function is only half the story. When implementing hashmaps, collisions are unavoidable, especially for smaller arrays. To deal with these, a linked list can be generated whenever a collision occurs (the linked list is handled by the `Entry` class mentioned above). Of course, given enough insertions, the linked lists within the hashmap will eventually become too long and can penalize the behavior of the data structure. To remedy this, our `HashMap` class automatically detects when it must perform resizes: this occurs when the average length of the linked lists exceeds a certain value (for our program, $1.1$), or when the number of filled slots within the array have exceeded a certain threshold ($> 50\%$ of the slots have been filled).
+
+### 2.3 Queue
+
+The queue is a simpler data structure. To create the `Queue` class, we only need a pointer to the head and tail `Entry` instances. The tail allows us to `queue()` new entries, while the head allows us to `dequeue()` the entries that have been waiting the longest. The only time we use a queue is when looking for connections between nodes within the dataset. During this procedure, a breadth-first search is conducted. A queue holds the nodes that need to be visited.
+
+### 2.4 Stack
+
+Stacks, like queues, are trivial to implement. The only difference here is that we only need to store a head pointer (no need for a tail pointer since we `push()` and `pop()` `Entry` instances onto the head). Stacks are also only used when looking for connections within our dataset. Because the sequence of nodes produced by our breadth-first search implementation reads the connection in reverse, we use a stack to allow us to print the connection in the right order (from the source node to the target node, instead of vise versa).
 
 ![model-representation](./README/header-model-representation.png)
 
+To decouple the model from the components we have, the author created separate classes to represent specific parts of the model defined by the project (social networks). Think of the structures outlined in ***2. Components*** as constructs we defined as an extension of the C language, rather than as specific parts of this project. Thus, it makes sense to develop those parts independent of the actual data we want to represent. On the other hand, all the classes outlined in ***3. Model Representation*** have methods and properties that behave *according to the project specifications*.
+
 ### 3.1 Record
 
-this represents the actual data we store in the graph
-in this case, given the nature of the data, a record only contains an id and a name (which we just make equal for the purposes of this program)
-
-we never actually needed to access the records for the purposes of this program, but that's okay; in case we want to extend our program to store much more complicated data, we could do so by changing this struct. the behaviour of the program will still be the same, and graphs can still be modeled.
+To represent the data stored by individual nodes within the network, the `Record` class was created. Given the nature of the provided starter data, `Record` instances were design to hold only names and ids (for the purposes of this project, the names and ids are simply equal). If we wanted to extend the functionality of our program, we could just as well add other properties to the record class (such as user address, user SSN, etc.). The core behavior of the program would not be affected.
 
 ### 3.2 Node
 
-these are just pointers; the actual data are stored in the records
-all the nodes do are help us create relationships among the records; so by swapping the records out, we can store somthing else
-it's proper encapsulation!
+The `Node` class could just as well been placed within ***2. Components***. Nevertheless, it is placed here because the author believes there was not enough of a *generalization* to separate the `Node` class from depending on the model data (in this case, it always assumes connections are bidirectional).
+
+To store adjacency information, each `Node` instance has its own `HashMap` instance that stores pointers to adjacent nodes indexed by their id. This is very useful as it allows us to determine adjacencies in $\mathcal{O}(1)$ time.
+
+By doing this, the `Node` class allows us to model the graph of our social networks. Of course, simply constructing the connections between the nodes and storing a "2d linked list" of sorts would be cumbersome to deal with: traversing the graph would take a while, and accessing information on any node would require us to start at the "head" of the graph (this is akin to how we start at the head of a queue, and since these graphs aren't necessarily trees, calling them "roots" would be incorrect). So how do we deal with this? The `Model` class outlined below details our solution.
 
 ### 3.3 Model
 
-The model performs all the graph-related logic and operates on the nodes.
-This is where traversing the graph, adding /removing nodes, etc. are done. 
-I tried my best to separate out the printing functions as much as i could.
+To speed up the access of any given node, the model also stores a `HashMap` that indexes all nodes by their id. That way, any node is accessible in $\mathcal{O}(1)$ time. The `Model` class performs all the graph-related logic and operates on the nodes themselves. When we wish to query the friends of a given node, the `Model` class does this for us. When we wish to find a connection between two given nodes, the `Model` class also does this for us.
 
-> Constructing the representation from the data structures
->
+Ideally, the model class should only deal with the data itself and should not handle any side effects such as printing to the console. However, due to time constraints, a few of the printing functions were delegated to this class. Nevertheless, the author resolved to isolate the printing processes as much as possible from the core functionalities of the `Model` class. 
 
 # 4 Reflections, Recommendations
+
+### 4.1 Visualizing the Different Social Networks
+
+Midway the project, there was a plan to visualize the datasets using [force-directed graphs](https://en.wikipedia.org/wiki/Force-directed_graph_drawing). As much as the author tried, this seemed to be the only possible solution to constructing an *orderly* network graph. Although naive implementations of this method have an $\mathcal{O}(n^3)$ time complexity, [the Barnes-Hut algorithm](https://en.wikipedia.org/wiki/Force-directed_graph_drawing) provided an alternative solution with $\mathcal{O}(n^2 \log n)$ time. This solution was attempted (and almost included) in the final submission, but time constraints forbade this from happening. Nevertheless, the author will duly update this repository (even after the submission deadline) if he manages to implement the said functionalities. As of now, it will be left here as a recommendation for others who might want to do this.
+
+### 4.2 Java Might've Been Better After All (...or Not?)
+
+Rather than a recommendation: I find it interesting to think about how differently this project would have gone had I decided to stick to Java. In hindsight, there probably exists a faster way to read text files aside from parsing each token one after the other (which is what took so long with Java). If I figured this out early on, I might've had an easier time constructing the `Model` class (as I wouldn't have needed to implement hashmaps, queues, and stacks from the ground up). I could've had more time to visualize the datasets. Alas, it is too late to change this.
+
+Anyway, I do feel grateful having meddled with the implementations of those data structures; it taught me a lot having to build them with nothing but the barest of C tools (although I would like to say that it's not my first time doing this--I had a bit of fun doing that last term!)
 
 # 5 Author
 
